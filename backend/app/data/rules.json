@@ -1,14 +1,106 @@
 [
-    {
-        "id": "R001",
-        "sutra": "6.1.87",
-        "name": "Guṇa transformation: अ + इ",
-        "description": "Illustrative computational representation of a guṇa transformation.",
-        "phenomenon": "Sandhi",
-        "priority": 10,
-        "input_pattern": "अइ",
-        "replacement": "ए",
-        "dependencies": [],
-        "enabled": true
-    }
+  {
+    "id": "R001",
+    "sutra": "6.1.87",
+    "name": "Illustrative guṇa transformation",
+    "description": "Prototype rule used to demonstrate a structured computational transformation.",
+    "phenomenon": "Sandhi",
+
+    "conditions": [
+      {
+        "type": "pattern",
+        "description": "Illustrative pattern condition",
+        "pattern": "अइ"
+      }
+    ],
+
+    "operation": {
+      "type": "substitute",
+      "target": "अइ",
+      "replacement": "ए"
+    },
+
+    "scope": {
+      "adhikara": null,
+      "anuvritti": [],
+      "domain": "illustrative prototype",
+      "notes": "Prototype representation; not a complete formal encoding of the sūtra."
+    },
+
+    "priority": 100,
+
+    "dependencies": [],
+
+    "blocking_type": "none",
+
+    "blocks": [],
+
+    "blocked_by": [],
+
+    "exceptions": [],
+
+    "tags": [
+      "prototype",
+      "sandhi"
+    ],
+
+    "enabled": true,
+
+    "source_reference": null,
+
+    "validation_status": "illustrative"
+  },
+
+  {
+    "id": "R002",
+    "sutra": "TEST.FEATURE.01",
+    "name": "Illustrative grammatical feature update",
+    "description": "Demonstrates a feature-based condition and feature update operation.",
+    "phenomenon": "Feature processing",
+
+    "conditions": [
+      {
+        "type": "feature",
+        "description": "Rule applies to a verb",
+        "features": {
+          "category": "verb"
+        }
+      }
+    ],
+
+    "operation": {
+      "type": "feature_update",
+      "feature_updates": {
+        "tense": "present"
+      }
+    },
+
+    "scope": {
+      "domain": "prototype testing",
+      "notes": "Synthetic test rule for validating the schema."
+    },
+
+    "priority": 90,
+
+    "dependencies": [],
+
+    "blocking_type": "none",
+
+    "blocks": [],
+
+    "blocked_by": [],
+
+    "exceptions": [],
+
+    "tags": [
+      "prototype",
+      "features"
+    ],
+
+    "enabled": true,
+
+    "source_reference": null,
+
+    "validation_status": "synthetic"
+  }
 ]

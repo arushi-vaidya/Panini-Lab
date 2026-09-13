@@ -1,61 +1,173 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 from .models import Rule
 
 
 class RuleRegistry:
-    """
-    Loads and manages the computational rule set.
-    """
 
-    def __init__(self, rules_path: str):
-        self.rules_path = Path(rules_path)
+    def __init__(
+        self,
+        rules_path: str | Path
+    ):
+
+        self.rules_path = Path(
+            rules_path
+        )
+
         self.rules: Dict[str, Rule] = {}
 
         self.load_rules()
 
-    def load_rules(self):
-        """
-        Load rules from JSON.
-        """
+    # ========================================================
+    # LOAD
+    # ========================================================
 
-        with open(self.rules_path, "r", encoding="utf-8") as file:
+    def load_rules(self):
+
+        with self.rules_path.open(
+            "r",
+            encoding="utf-8"
+        ) as file:
+
             raw_rules = json.load(file)
 
+        loaded_rules = [
+            Rule(**data)
+            for data in raw_rules
+        ]
+
+        ids = [
+            rule.id
+            for rule in loaded_rules
+        ]
+
+        if len(ids) != len(set(ids)):
+
+            raise ValueError(
+                "Rule IDs must be unique."
+            )
+
         self.rules = {
-            rule_data["id"]: Rule(**rule_data)
-            for rule_data in raw_rules
+            rule.id: rule
+            for rule in loaded_rules
         }
 
-    def get_rule(self, rule_id: str) -> Rule:
-        """
-        Retrieve a rule by ID.
-        """
+        self.validate_dependencies()
+
+    # ========================================================
+    # DEPENDENCY VALIDATION
+    # ========================================================
+
+    def validate_dependencies(self):
+
+        rule_ids = set(
+            self.rules.keys()
+        )
+
+        for rule in self.rules.values():
+
+            for dependency in rule.dependencies:
+
+                if dependency not in rule_ids:
+
+                    raise ValueError(
+                        f"Rule {rule.id} depends on "
+                        f"unknown rule {dependency}."
+                    )
+
+            for blocked_rule in rule.blocks:
+
+                if blocked_rule not in rule_ids:
+
+                    raise ValueError(
+                        f"Rule {rule.id} blocks "
+                        f"unknown rule {blocked_rule}."
+                    )
+
+            for blocker in rule.blocked_by:
+
+                if blocker not in rule_ids:
+
+                    raise ValueError(
+                        f"Rule {rule.id} is blocked by "
+                        f"unknown rule {blocker}."
+                    )
+
+    # ========================================================
+    # GET RULE
+    # ========================================================
+
+    def get_rule(
+        self,
+        rule_id: str
+    ) -> Rule:
 
         if rule_id not in self.rules:
-            raise ValueError(f"Rule {rule_id} not found.")
+
+            raise ValueError(
+                f"Rule {rule_id} not found."
+            )
 
         return self.rules[rule_id]
 
-    def get_all_rules(self):
-        """
-        Return all registered rules.
-        """
+    # ========================================================
+    # GET ALL
+    # ========================================================
 
-        return list(self.rules.values())
+    def get_all_rules(self) -> List[Rule]:
 
-    def enable_rule(self, rule_id: str):
-        self.get_rule(rule_id).enabled = True
+        return list(
+            self.rules.values()
+        )
 
-    def disable_rule(self, rule_id: str):
-        self.get_rule(rule_id).enabled = False
+    # ========================================================
+    # ENABLE
+    # ========================================================
+
+    def enable_rule(
+        self,
+        rule_id: str
+    ):
+
+        self.get_rule(
+            rule_id
+        ).enabled = True
+
+    # ========================================================
+    # DISABLE
+    # ========================================================
+
+    def disable_rule(
+        self,
+        rule_id: str
+    ):
+
+        self.get_rule(
+            rule_id
+        ).enabled = False
+
+    # ========================================================
+    # RESET
+    # ========================================================
 
     def reset_rules(self):
-        """
-        Enable all rules.
-        """
 
         for rule in self.rules.values():
+
             rule.enabled = True
+
+    # ========================================================
+    # ENABLED RULES
+    # ========================================================
+
+    def enabled_rules(self):
+
+        return [
+            rule
+            for rule in self.rules.values()
+            if rule.enabled
+        ]

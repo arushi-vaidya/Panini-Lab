@@ -2,6 +2,7 @@ from pathlib import Path
 
 from app.core.registry import RuleRegistry
 from app.core.derivation import DerivationEngine
+from app.core.experiment import CounterfactualExperiment
 
 
 RULE_PATH = (
@@ -13,56 +14,112 @@ RULE_PATH = (
 
 def print_derivation(result):
 
-    print("\n==============================")
-    print("       PĀṆINI-LAB")
-    print("==============================")
+    print("\n================================")
+    print("         PĀṆINI-LAB")
+    print("================================")
 
-    print(f"\nInput : {result.input_form}")
-    print(f"Output: {result.output_form}")
+    print(
+        f"\nInput  : {result.input_form}"
+    )
 
-    print("\nDerivation:")
-    print("------------------------------")
+    print(
+        f"Output : {result.output_form}"
+    )
+
+    print("\nDerivation")
+    print("--------------------------------")
 
     for step in result.steps:
 
         print(
-            f"{step.step_number}. "
+            f"{step.step_number:02d}. "
             f"[{step.rule_id}] "
-            f"{step.before} → {step.after}"
+            f"{step.before_form} "
+            f"→ "
+            f"{step.after_form}"
         )
 
         print(
-            f"   {step.explanation}"
+            f"    {step.explanation}"
         )
 
-    print("\nRules Applied:")
-    print(result.rules_applied)
+    print("\nApplied rules:")
 
-    print("\nRules Skipped:")
-    print(result.rules_skipped)
+    print(
+        result.rules_applied
+    )
 
-    print("==============================\n")
+    print("\nSkipped rules:")
+
+    print(
+        result.rules_skipped
+    )
 
 
 def main():
 
-    registry = RuleRegistry(str(RULE_PATH))
+    registry = RuleRegistry(
+        RULE_PATH
+    )
 
-    engine = DerivationEngine(registry)
+    engine = DerivationEngine(
+        registry
+    )
 
-    print("\n===== ORIGINAL =====")
+    experiment = CounterfactualExperiment(
+        engine
+    )
 
-    original = engine.derive("अइ")
+    # ========================================================
+    # ORIGINAL
+    # ========================================================
 
-    print_derivation(original)
+    print("\n\n========== ORIGINAL ==========")
 
-    print("\n===== COUNTERFACTUAL =====")
+    original = engine.derive(
+        "अइ"
+    )
 
-    registry.disable_rule("R001")
+    print_derivation(
+        original
+    )
 
-    counterfactual = engine.derive("अइ")
+    # ========================================================
+    # COUNTERFACTUAL
+    # ========================================================
 
-    print_derivation(counterfactual)
+    print("\n\n====== COUNTERFACTUAL ======")
+
+    result = experiment.run(
+        "अइ",
+        disabled_rules=[
+            "R001"
+        ]
+    )
+
+    print(
+        f"\nInput: {result.input_form}"
+    )
+
+    print(
+        f"Original output: "
+        f"{result.original_output}"
+    )
+
+    print(
+        f"Counterfactual output: "
+        f"{result.counterfactual_output}"
+    )
+
+    print(
+        f"\nOutput changed: "
+        f"{result.output_changed}"
+    )
+
+    print(
+        f"Changed steps: "
+        f"{result.changed_steps}"
+    )
 
 
 if __name__ == "__main__":

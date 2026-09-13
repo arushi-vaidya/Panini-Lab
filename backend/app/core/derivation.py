@@ -1,103 +1,203 @@
-from typing import List
+from __future__ import annotations
+
+from typing import Optional
 
 from .models import (
+    DerivationRecord,
     DerivationResult,
-    DerivationStep
+    GrammarState,
 )
 
-from .rule_engine import RuleEngine
 from .registry import RuleRegistry
+
+from .rule_engine import RuleEngine
 
 
 class DerivationEngine:
 
-    def __init__(self, registry: RuleRegistry):
+    def __init__(
+        self,
+        registry: RuleRegistry
+    ):
 
         self.registry = registry
+
         self.rule_engine = RuleEngine()
 
-    def derive(self, input_form: str) -> DerivationResult:
+    # ========================================================
+    # DERIVE
+    # ========================================================
 
-        current_form = input_form
+    def derive(
+        self,
+        input_form: str,
+        *,
+        initial_features: Optional[dict] = None,
+    ) -> DerivationResult:
 
-        steps: List[DerivationStep] = []
+        # ----------------------------------------------------
+        # INITIAL STATE
+        # ----------------------------------------------------
 
-        rules_applied = []
-        rules_skipped = []
-
-        step_number = 1
-
-        rules = sorted(
-            self.registry.get_all_rules(),
-            key=lambda rule: rule.priority,
-            reverse=True
+        initial_state = GrammarState(
+            form=input_form,
+            features=(
+                initial_features
+                or {}
+            )
         )
 
-        for rule in rules:
+        current_state = (
+            initial_state.snapshot()
+        )
 
-            before = current_form
+        steps = []
+
+        rules_applied = []
+
+        rules_skipped = []
+
+        # ----------------------------------------------------
+        # RULE ORDER
+        # ----------------------------------------------------
+
+        ordered_rules = sorted(
+            self.registry.get_all_rules(),
+            key=lambda rule: (
+                -rule.priority,
+                rule.id
+            )
+        )
+
+        # ----------------------------------------------------
+        # APPLY RULES
+        # ----------------------------------------------------
+
+        for (
+            step_number,
+            rule
+        ) in enumerate(
+            ordered_rules,
+            start=1
+        ):
+
+            before_state = (
+                current_state.snapshot()
+            )
+
+            # ================================================
+            # DISABLED RULE
+            # ================================================
 
             if not rule.enabled:
 
-                rules_skipped.append(rule.id)
-
-                steps.append(
-                    DerivationStep(
-                        step_number=step_number,
-                        rule_id=rule.id,
-                        sutra=rule.sutra,
-                        before=before,
-                        after=before,
-                        changed=False,
-                        explanation="Rule disabled."
-                    )
+                rules_skipped.append(
+                    rule.id
                 )
 
-                step_number += 1
-                continue
-
-            after, changed = self.rule_engine.apply_rule(
-                current_form,
-                rule
-            )
-
-            if changed:
-
-                current_form = after
-
-                rules_applied.append(rule.id)
-
-                explanation = (
-                    f"Applied {rule.sutra}: "
-                    f"{before} → {after}"
-                )
-
-            else:
-
-                explanation = (
-                    f"Rule {rule.sutra} "
-                    f"did not match the current state."
-                )
-
-            steps.append(
-                DerivationStep(
+                record = DerivationRecord(
                     step_number=step_number,
                     rule_id=rule.id,
                     sutra=rule.sutra,
-                    before=before,
-                    after=after,
-                    changed=changed,
-                    explanation=explanation
+                    before_form=(
+                        before_state.form
+                    ),
+                    after_form=(
+                        before_state.form
+                    ),
+                    changed=False,
+                    explanation=(
+                        "Rule is disabled."
+                    ),
+                    before_features=(
+                        before_state.features
+                    ),
+                    after_features=(
+                        before_state.features
+                    ),
                 )
+
+                steps.append(record)
+
+                continue
+
+            # ================================================
+            # APPLY
+            # ================================================
+
+            (
+                after_state,
+                changed,
+                explanation
+            ) = self.rule_engine.apply(
+                before_state,
+                rule
             )
 
-            step_number += 1
+            # ================================================
+            # RECORD APPLICATION
+            # ================================================
+
+            if changed:
+
+                after_state.applied_rules.append(
+                    rule.id
+                )
+
+                rules_applied.append(
+                    rule.id
+                )
+
+            # ================================================
+            # RECORD STEP
+            # ================================================
+
+            record = DerivationRecord(
+                step_number=step_number,
+                rule_id=rule.id,
+                sutra=rule.sutra,
+                before_form=(
+                    before_state.form
+                ),
+                after_form=(
+                    after_state.form
+                ),
+                changed=changed,
+                explanation=explanation,
+                before_features=(
+                    before_state.features
+                ),
+                after_features=(
+                    after_state.features
+                ),
+            )
+
+            after_state.history.append(
+                record
+            )
+
+            current_state = after_state
+
+            steps.append(record)
+
+        # ----------------------------------------------------
+        # FINAL RESULT
+        # ----------------------------------------------------
 
         return DerivationResult(
             input_form=input_form,
-            output_form=current_form,
+
+            output_form=current_state.form,
+
+            initial_state=initial_state,
+
+            final_state=current_state,
+
             steps=steps,
+
             rules_applied=rules_applied,
+
             rules_skipped=rules_skipped,
-            success=True
+
+            success=True,
         )
