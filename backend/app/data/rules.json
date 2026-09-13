@@ -1,0 +1,14 @@
+[
+    {
+        "id": "R001",
+        "sutra": "6.1.87",
+        "name": "Guṇa transformation: अ + इ",
+        "description": "Illustrative computational representation of a guṇa transformation.",
+        "phenomenon": "Sandhi",
+        "priority": 10,
+        "input_pattern": "अइ",
+        "replacement": "ए",
+        "dependencies": [],
+        "enabled": true
+    }
+]
