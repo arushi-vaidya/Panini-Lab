@@ -182,3 +182,47 @@ class DependencyGraph:
         a directed cycle.
         """
         return list(nx.topological_sort(self.graph))
+    @classmethod
+    def from_interactions(
+        cls,
+        rules: List[Rule],
+        interactions: Iterable[Any],
+    ) -> "DependencyGraph":
+        """
+        Build a dependency graph using empirically observed
+        rule interactions.
+
+        Only interaction types that represent execution ordering
+        are converted into directed graph edges.
+        """
+
+        graph = cls(rules)
+
+        for interaction in interactions:
+            relation = interaction.relation
+
+            if relation not in {
+                "observed_before",
+                "blocks",
+            }:
+                continue
+
+            source = interaction.source
+            target = interaction.target
+
+            if source not in graph.graph:
+                continue
+
+            if target not in graph.graph:
+                continue
+
+            graph.graph.add_edge(
+                source,
+                target,
+                relation=relation,
+                count=interaction.count,
+                examples=list(interaction.examples),
+                source_type="empirical",
+            )
+
+        return graph

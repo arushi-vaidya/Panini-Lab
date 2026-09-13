@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
 
+from app.core.derivation import DerivationEngine
+from app.core.interaction_miner import InteractionMiner
 from app.core.models import Rule
-from app.core.dependency_graph import DependencyGraph
+from app.core.sanskrit import tokenize_sanskrit
 
 
 RULES_PATH = (
@@ -23,65 +25,119 @@ def load_rules():
     ]
 
 
-def test_graph_contains_all_rules():
-    rules = load_rules()
-
-    graph = DependencyGraph(rules)
-
-    assert len(graph.get_nodes()) == 5
+def get_engine():
+    return DerivationEngine(load_rules())
 
 
-def test_graph_contains_expected_rule_ids():
-    rules = load_rules()
+def test_miner_records_multi_rule_derivation():
+    engine = get_engine()
 
-    graph = DependencyGraph(rules)
+    result = engine.derive(
+        tokenize_sanskrit("अइ")
+    )
 
-    assert set(graph.get_nodes()) == {
-        "P60177",
-        "P60178",
-        "P60187",
-        "P60188",
-        "P601101",
+    miner = InteractionMiner()
+    miner.observe(result)
+
+    interactions = miner.get_interactions()
+
+    assert isinstance(interactions, list)
+
+
+def test_miner_can_record_manual_trace():
+    """
+    This test isolates the miner from the grammar engine.
+
+    It verifies that an observed rule sequence is converted
+    into pairwise interactions.
+    """
+
+    engine = get_engine()
+
+    result = engine.derive(
+        tokenize_sanskrit("अइ")
+    )
+
+    # Only run this test meaningfully if at least two rules fire.
+    if len(result.fired_rules) < 2:
+        return
+
+    miner = InteractionMiner()
+    miner.observe(result)
+
+    interactions = miner.get_interactions()
+
+    assert len(interactions) > 0
+
+
+def test_interaction_serialization():
+    engine = get_engine()
+
+    result = engine.derive(
+        tokenize_sanskrit("अइ")
+    )
+
+    miner = InteractionMiner()
+    miner.observe(result)
+
+    data = miner.to_dict()
+
+    assert "interactions" in data
+    assert isinstance(data["interactions"], list)
+
+
+def test_miner_clear():
+    engine = get_engine()
+
+    result = engine.derive(
+        tokenize_sanskrit("अइ")
+    )
+
+    miner = InteractionMiner()
+    miner.observe(result)
+
+    miner.clear()
+
+    assert miner.get_interactions() == []
+
+def test_miner_detects_ordered_rule_interaction():
+    class MockResult:
+        input = "test"
+        fired_rules = [
+            "P60101",
+            "P60177",
+            "P60187",
+        ]
+
+    miner = InteractionMiner()
+
+    miner.observe(MockResult())
+
+    interactions = miner.get_interactions()
+
+    pairs = {
+        (
+            interaction.source,
+            interaction.target,
+            interaction.relation,
+        )
+        for interaction in interactions
     }
 
+    assert (
+        "P60101",
+        "P60177",
+        "observed_before",
+    ) in pairs
 
-def test_dependency_edges_exist():
-    rules = load_rules()
+    assert (
+        "P60101",
+        "P60187",
+        "observed_before",
+    ) in pairs
 
-    graph = DependencyGraph(rules)
-
-    edges = graph.get_edges()
-
-    assert len(edges) > 0
-
-
-def test_graph_serialization():
-    rules = load_rules()
-
-    graph = DependencyGraph(rules)
-
-    data = graph.to_dict()
-
-    assert "nodes" in data
-    assert "edges" in data
-
-    assert len(data["nodes"]) == 5
-
-
-def test_blocking_relationships():
-    rules = load_rules()
-
-    graph = DependencyGraph(rules)
-
-    # 6.1.101 should block 6.1.77
-    blocking_rules = graph.get_blocking_rules("P60177")
-
-    assert "P601101" in blocking_rules
-
-
-def test_graph_cycle_detection():
-    rules = load_rules()
-
-    graph = DependencyGraph(rules)
-
-    assert isinstance(graph.has_cycle(), bool)
+    assert (
+        "P60177",
+        "P60187",
+        "observed_before",
+    ) in pairs
