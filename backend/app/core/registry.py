@@ -4,67 +4,84 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
-from .models import Rule
+from .models import (
+    BlockingType,
+    ConditionType,
+    OperationType,
+    Rule,
+    RuleCondition,
+    RuleOperation,
+    RuleScope,
+)
 
 
 class RuleRegistry:
 
-    def __init__(
-        self,
-        rules_path: str | Path
-    ):
-
-        self.rules_path = Path(
-            rules_path
-        )
-
+    def __init__(self):
         self.rules: Dict[str, Rule] = {}
 
-        self.load_rules()
+    def register(
+        self,
+        rule: Rule,
+    ) -> None:
 
-    # ========================================================
-    # LOAD
-    # ========================================================
+        rule.validate()
 
-    def load_rules(self):
-
-        with self.rules_path.open(
-            "r",
-            encoding="utf-8"
-        ) as file:
-
-            raw_rules = json.load(file)
-
-        loaded_rules = [
-            Rule(**data)
-            for data in raw_rules
-        ]
-
-        ids = [
-            rule.id
-            for rule in loaded_rules
-        ]
-
-        if len(ids) != len(set(ids)):
-
+        if rule.rule_id in self.rules:
             raise ValueError(
-                "Rule IDs must be unique."
+                f"Duplicate rule ID: {rule.rule_id}"
             )
 
-        self.rules = {
-            rule.id: rule
-            for rule in loaded_rules
-        }
+        self.rules[rule.rule_id] = rule
 
-        self.validate_dependencies()
+    def get(
+        self,
+        rule_id: str,
+    ) -> Rule:
 
-    # ========================================================
-    # DEPENDENCY VALIDATION
-    # ========================================================
+        if rule_id not in self.rules:
+            raise KeyError(
+                f"Unknown rule: {rule_id}"
+            )
 
-    def validate_dependencies(self):
+        return self.rules[rule_id]
 
-        rule_ids = set(
+    def all_rules(self) -> List[Rule]:
+
+        return list(
+            self.rules.values()
+        )
+
+    def enabled_rules(self) -> List[Rule]:
+
+        return [
+            rule
+            for rule in self.rules.values()
+            if rule.enabled
+        ]
+
+    def disable(
+        self,
+        rule_id: str,
+    ) -> None:
+
+        self.get(rule_id).enabled = False
+
+    def enable(
+        self,
+        rule_id: str,
+    ) -> None:
+
+        self.get(rule_id).enabled = True
+
+    def reset(self) -> None:
+
+        for rule in self.rules.values():
+            rule.enabled = True
+
+    def validate_dependencies(self) -> None:
+
+        known = set(
             self.rules.keys()
         )
 
@@ -72,102 +89,206 @@ class RuleRegistry:
 
             for dependency in rule.dependencies:
 
-                if dependency not in rule_ids:
-
+                if dependency not in known:
                     raise ValueError(
-                        f"Rule {rule.id} depends on "
-                        f"unknown rule {dependency}."
+                        f"{rule.rule_id} depends on "
+                        f"unknown rule {dependency}"
                     )
 
-            for blocked_rule in rule.blocks:
+            for blocked in rule.blocks:
 
-                if blocked_rule not in rule_ids:
-
+                if blocked not in known:
                     raise ValueError(
-                        f"Rule {rule.id} blocks "
-                        f"unknown rule {blocked_rule}."
+                        f"{rule.rule_id} blocks "
+                        f"unknown rule {blocked}"
                     )
 
             for blocker in rule.blocked_by:
 
-                if blocker not in rule_ids:
-
+                if blocker not in known:
                     raise ValueError(
-                        f"Rule {rule.id} is blocked by "
-                        f"unknown rule {blocker}."
+                        f"{rule.rule_id} is blocked by "
+                        f"unknown rule {blocker}"
                     )
 
-    # ========================================================
-    # GET RULE
-    # ========================================================
-
-    def get_rule(
+    def load_json(
         self,
-        rule_id: str
-    ) -> Rule:
+        path: str | Path,
+    ) -> None:
 
-        if rule_id not in self.rules:
+        path = Path(path)
 
-            raise ValueError(
-                f"Rule {rule_id} not found."
+        with path.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+
+            data = json.load(file)
+
+        for raw_rule in data.get(
+            "rules",
+            [],
+        ):
+
+            conditions = []
+
+            for raw_condition in raw_rule.get(
+                "conditions",
+                [],
+            ):
+
+                conditions.append(
+                    RuleCondition(
+                        condition_type=ConditionType(
+                            raw_condition[
+                                "condition_type"
+                            ]
+                        ),
+                        pattern=raw_condition.get(
+                            "pattern"
+                        ),
+                        feature_key=raw_condition.get(
+                            "feature_key"
+                        ),
+                        feature_value=raw_condition.get(
+                            "feature_value"
+                        ),
+                        left_pattern=raw_condition.get(
+                            "left_pattern"
+                        ),
+                        right_pattern=raw_condition.get(
+                            "right_pattern"
+                        ),
+                        marker=raw_condition.get(
+                            "marker"
+                        ),
+                        negate=raw_condition.get(
+                            "negate",
+                            False,
+                        ),
+                        metadata=raw_condition.get(
+                            "metadata",
+                            {},
+                        ),
+                    )
+                )
+
+            operations = []
+
+            for raw_operation in raw_rule.get(
+                "operations",
+                [],
+            ):
+
+                operations.append(
+                    RuleOperation(
+                        operation_type=OperationType(
+                            raw_operation[
+                                "operation_type"
+                            ]
+                        ),
+                        target_pattern=raw_operation.get(
+                            "target_pattern"
+                        ),
+                        replacement=raw_operation.get(
+                            "replacement"
+                        ),
+                        position=raw_operation.get(
+                            "position"
+                        ),
+                        feature_key=raw_operation.get(
+                            "feature_key"
+                        ),
+                        feature_value=raw_operation.get(
+                            "feature_value"
+                        ),
+                        marker=raw_operation.get(
+                            "marker"
+                        ),
+                        metadata=raw_operation.get(
+                            "metadata",
+                            {},
+                        ),
+                    )
+                )
+
+            raw_scope = raw_rule.get(
+                "scope",
+                {},
             )
 
-        return self.rules[rule_id]
+            scope = RuleScope(
+                domains=raw_scope.get(
+                    "domains",
+                    [],
+                ),
+                categories=raw_scope.get(
+                    "categories",
+                    [],
+                ),
+                required_features=raw_scope.get(
+                    "required_features",
+                    {},
+                ),
+                excluded_features=raw_scope.get(
+                    "excluded_features",
+                    {},
+                ),
+            )
 
-    # ========================================================
-    # GET ALL
-    # ========================================================
+            rule = Rule(
+                rule_id=raw_rule["rule_id"],
+                sutra=raw_rule["sutra"],
+                name=raw_rule["name"],
+                conditions=conditions,
+                operations=operations,
+                priority=raw_rule.get(
+                    "priority",
+                    0,
+                ),
+                scope=scope,
+                dependencies=raw_rule.get(
+                    "dependencies",
+                    [],
+                ),
+                blocking_type=BlockingType(
+                    raw_rule.get(
+                        "blocking_type",
+                        "none",
+                    )
+                ),
+                blocks=raw_rule.get(
+                    "blocks",
+                    [],
+                ),
+                blocked_by=raw_rule.get(
+                    "blocked_by",
+                    [],
+                ),
+                enabled=raw_rule.get(
+                    "enabled",
+                    True,
+                ),
 
-    def get_all_rules(self) -> List[Rule]:
+                repeatable=raw_rule.get(
+                    "repeatable",
+                    False,
+                ),
 
-        return list(
-            self.rules.values()
-        )
+                status=raw_rule.get(
+                    "status",
+                    "experimental",
+                ),
+                description=raw_rule.get(
+                    "description",
+                    "",
+                ),
+                metadata=raw_rule.get(
+                    "metadata",
+                    {},
+                ),
+            )
 
-    # ========================================================
-    # ENABLE
-    # ========================================================
+            self.register(rule)
 
-    def enable_rule(
-        self,
-        rule_id: str
-    ):
-
-        self.get_rule(
-            rule_id
-        ).enabled = True
-
-    # ========================================================
-    # DISABLE
-    # ========================================================
-
-    def disable_rule(
-        self,
-        rule_id: str
-    ):
-
-        self.get_rule(
-            rule_id
-        ).enabled = False
-
-    # ========================================================
-    # RESET
-    # ========================================================
-
-    def reset_rules(self):
-
-        for rule in self.rules.values():
-
-            rule.enabled = True
-
-    # ========================================================
-    # ENABLED RULES
-    # ========================================================
-
-    def enabled_rules(self):
-
-        return [
-            rule
-            for rule in self.rules.values()
-            if rule.enabled
-        ]
+        self.validate_dependencies()

@@ -1,126 +1,165 @@
 from pathlib import Path
 
-from app.core.registry import RuleRegistry
-from app.core.derivation import DerivationEngine
-from app.core.experiment import CounterfactualExperiment
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+from .core.derivation import DerivationEngine
+from .core.experiment import CounterfactualExperiment
+from .core.registry import RuleRegistry
 
 
-RULE_PATH = (
-    Path(__file__).resolve().parent
-    / "data"
-    / "rules.json"
+BASE_DIR = Path(__file__).resolve().parent
+
+RULE_FILE = BASE_DIR / "data" / "rules.json"
+
+
+app = FastAPI(
+    title="PĀṆINI-LAB",
+    description=(
+        "Counterfactual computational framework "
+        "for Pāṇinian rule-dependency analysis."
+    ),
+    version="0.2.0",
 )
 
 
-def print_derivation(result):
+registry = RuleRegistry()
 
-    print("\n================================")
-    print("         PĀṆINI-LAB")
-    print("================================")
+registry.load_json(
+    RULE_FILE
+)
 
-    print(
-        f"\nInput  : {result.input_form}"
-    )
+derivation_engine = DerivationEngine()
 
-    print(
-        f"Output : {result.output_form}"
-    )
+experiment_engine = CounterfactualExperiment(
+    derivation_engine
+)
 
-    print("\nDerivation")
-    print("--------------------------------")
 
-    for step in result.steps:
+class DerivationRequest(BaseModel):
 
-        print(
-            f"{step.step_number:02d}. "
-            f"[{step.rule_id}] "
-            f"{step.before_form} "
-            f"→ "
-            f"{step.after_form}"
+    input_surface: str
+
+    disabled_rules: list[str] = []
+
+
+class ExperimentRequest(BaseModel):
+
+    input_surface: str
+
+    disabled_rules: list[str]
+
+
+@app.get("/")
+def root():
+
+    return {
+        "project": "PĀṆINI-LAB",
+        "phase": "1B",
+        "status": "implemented",
+    }
+
+
+@app.get("/rules")
+def get_rules():
+
+    return {
+        "count": len(
+            registry.all_rules()
+        ),
+        "rules": [
+            {
+                "rule_id": rule.rule_id,
+                "sutra": rule.sutra,
+                "name": rule.name,
+                "priority": rule.priority,
+                "enabled": rule.enabled,
+                "status": rule.status,
+            }
+            for rule in registry.all_rules()
+        ],
+    }
+
+
+@app.get("/rules/{rule_id}")
+def get_rule(
+    rule_id: str,
+):
+
+    try:
+
+        rule = registry.get(
+            rule_id
         )
 
-        print(
-            f"    {step.explanation}"
+    except KeyError as exc:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
         )
 
-    print("\nApplied rules:")
+    return {
+        "rule_id": rule.rule_id,
+        "sutra": rule.sutra,
+        "name": rule.name,
+        "description": rule.description,
+        "priority": rule.priority,
+        "status": rule.status,
+        "enabled": rule.enabled,
+        "conditions": [
+            condition.__dict__
+            for condition in rule.conditions
+        ],
+        "operations": [
+            operation.__dict__
+            for operation in rule.operations
+        ],
+    }
 
-    print(
-        result.rules_applied
+
+@app.post("/derive")
+def derive(
+    request: DerivationRequest,
+):
+
+    result = derivation_engine.derive(
+        input_surface=request.input_surface,
+        rules=registry.all_rules(),
+        disabled_rules=request.disabled_rules,
     )
 
-    print("\nSkipped rules:")
+    return {
+        "input": result.input_surface,
+        "output": result.output_surface,
+        "halted": result.halted,
+        "halt_reason": result.halt_reason,
+        "applied_rules": result.applied_rules,
+        "final_state": result.final_state.snapshot(),
+        "trace": [
+            record.__dict__
+            for record in result.records
+        ],
+    }
 
-    print(
-        result.rules_skipped
+
+@app.post("/experiment")
+def experiment(
+    request: ExperimentRequest,
+):
+
+    result = experiment_engine.run(
+        input_surface=request.input_surface,
+        rules=registry.all_rules(),
+        disabled_rules=request.disabled_rules,
     )
 
-
-def main():
-
-    registry = RuleRegistry(
-        RULE_PATH
-    )
-
-    engine = DerivationEngine(
-        registry
-    )
-
-    experiment = CounterfactualExperiment(
-        engine
-    )
-
-    # ========================================================
-    # ORIGINAL
-    # ========================================================
-
-    print("\n\n========== ORIGINAL ==========")
-
-    original = engine.derive(
-        "अइ"
-    )
-
-    print_derivation(
-        original
-    )
-
-    # ========================================================
-    # COUNTERFACTUAL
-    # ========================================================
-
-    print("\n\n====== COUNTERFACTUAL ======")
-
-    result = experiment.run(
-        "अइ",
-        disabled_rules=[
-            "R001"
-        ]
-    )
-
-    print(
-        f"\nInput: {result.input_form}"
-    )
-
-    print(
-        f"Original output: "
-        f"{result.original_output}"
-    )
-
-    print(
-        f"Counterfactual output: "
-        f"{result.counterfactual_output}"
-    )
-
-    print(
-        f"\nOutput changed: "
-        f"{result.output_changed}"
-    )
-
-    print(
-        f"Changed steps: "
-        f"{result.changed_steps}"
-    )
-
-
-if __name__ == "__main__":
-    main()
+    return {
+        "input": request.input_surface,
+        "disabled_rules": result.disabled_rules,
+        "baseline_output": result.baseline_output,
+        "counterfactual_output": result.counterfactual_output,
+        "output_changed": result.output_changed,
+        "changed_steps": result.changed_steps,
+        "impact_summary": result.impact_summary,
+    }

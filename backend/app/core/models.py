@@ -1,20 +1,18 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
+import copy
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-
-
-# ============================================================
-# ENUMS
-# ============================================================
 
 class OperationType(str, Enum):
     SUBSTITUTE = "substitute"
     INSERT = "insert"
     DELETE = "delete"
     FEATURE_UPDATE = "feature_update"
+    MARKER_ADD = "marker_add"
+    MARKER_REMOVE = "marker_remove"
     CUSTOM = "custom"
 
 
@@ -22,6 +20,7 @@ class ConditionType(str, Enum):
     PATTERN = "pattern"
     FEATURE = "feature"
     CONTEXT = "context"
+    MARKER = "marker"
     CUSTOM = "custom"
 
 
@@ -32,423 +31,316 @@ class BlockingType(str, Enum):
     MUTUAL = "mutual"
 
 
-# ============================================================
-# TOKEN
-# ============================================================
-
-class StateToken(BaseModel):
+@dataclass
+class StateToken:
     """
-    Represents a token/segment inside a grammatical state.
+    A token is the smallest computational unit in a derivational state.
+
+    Example:
+        token_id = t3
+        surface = "अ"
+        source = "धातु"
+        features = {"category": "root"}
     """
 
-    model_config = ConfigDict(validate_assignment=True)
-
-    id: str
-
+    token_id: str
     surface: str
 
-    underlying: Optional[str] = None
+    source: Optional[str] = None
 
-    token_type: str = "segment"
+    features: Dict[str, Any] = field(default_factory=dict)
 
-    features: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    markers: List[str] = field(default_factory=list)
+
+    position: int = 0
+
+    active: bool = True
+
+    def clone(self) -> "StateToken":
+        return copy.deepcopy(self)
+
+    def has_feature(self, key: str, value: Any) -> bool:
+        return self.features.get(key) == value
+
+    def add_marker(self, marker: str) -> None:
+        if marker not in self.markers:
+            self.markers.append(marker)
+
+    def remove_marker(self, marker: str) -> None:
+        if marker in self.markers:
+            self.markers.remove(marker)
 
 
-# ============================================================
-# MORPHEME
-# ============================================================
-
-class Morpheme(BaseModel):
+@dataclass
+class Morpheme:
     """
-    Represents a morphological unit.
+    Groups one or more StateTokens into a grammatical unit.
     """
 
-    id: str
+    morpheme_id: str
 
     form: str
 
     category: Optional[str] = None
 
-    features: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    features: Dict[str, Any] = field(default_factory=dict)
 
-    token_ids: List[str] = Field(
-        default_factory=list
-    )
+    token_ids: List[str] = field(default_factory=list)
 
 
-# ============================================================
-# RULE CONDITION
-# ============================================================
+@dataclass
+class RuleCondition:
+    condition_type: ConditionType
 
-class RuleCondition(BaseModel):
-    """
-    Represents a condition under which a rule may apply.
-    """
-
-    type: ConditionType
-
-    description: str = ""
-
-    # Pattern-based condition
     pattern: Optional[str] = None
 
-    # Feature-based condition
-    features: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    feature_key: Optional[str] = None
 
-    # Context information
-    left_context: Optional[str] = None
+    feature_value: Any = None
 
-    right_context: Optional[str] = None
+    left_pattern: Optional[str] = None
 
-    # Extensible parameters
-    parameters: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    right_pattern: Optional[str] = None
 
-    @model_validator(mode="after")
-    def validate_condition(self):
+    marker: Optional[str] = None
 
-        if self.type == ConditionType.PATTERN:
+    negate: bool = False
 
-            if not self.pattern:
-                raise ValueError(
-                    "Pattern conditions require 'pattern'."
-                )
-
-        if self.type == ConditionType.FEATURE:
-
-            if not self.features:
-                raise ValueError(
-                    "Feature conditions require 'features'."
-                )
-
-        return self
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-# ============================================================
-# RULE OPERATION
-# ============================================================
+@dataclass
+class RuleOperation:
+    operation_type: OperationType
 
-class RuleOperation(BaseModel):
-    """
-    Represents the transformation performed by a rule.
-    """
-
-    type: OperationType
-
-    target: Optional[str] = None
+    target_pattern: Optional[str] = None
 
     replacement: Optional[str] = None
 
-    feature_updates: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    position: Optional[int] = None
 
-    parameters: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    feature_key: Optional[str] = None
 
-    @model_validator(mode="after")
-    def validate_operation(self):
+    feature_value: Any = None
 
-        if self.type == OperationType.SUBSTITUTE:
+    marker: Optional[str] = None
 
-            if self.target is None:
-                raise ValueError(
-                    "SUBSTITUTE requires target."
-                )
-
-            if self.replacement is None:
-                raise ValueError(
-                    "SUBSTITUTE requires replacement."
-                )
-
-        if self.type == OperationType.INSERT:
-
-            if self.replacement is None:
-                raise ValueError(
-                    "INSERT requires replacement."
-                )
-
-        if self.type == OperationType.DELETE:
-
-            if self.target is None:
-                raise ValueError(
-                    "DELETE requires target."
-                )
-
-        if self.type == OperationType.FEATURE_UPDATE:
-
-            if not self.feature_updates:
-
-                raise ValueError(
-                    "FEATURE_UPDATE requires feature_updates."
-                )
-
-        return self
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-# ============================================================
-# RULE SCOPE
-# ============================================================
-
-class RuleScope(BaseModel):
+@dataclass
+class RuleScope:
     """
-    Represents contextual scope associated with a rule.
+    Describes where a rule is allowed to operate.
     """
 
-    adhikara: Optional[str] = None
+    domains: List[str] = field(default_factory=list)
 
-    anuvritti: List[str] = Field(
-        default_factory=list
-    )
+    categories: List[str] = field(default_factory=list)
 
-    domain: Optional[str] = None
+    required_features: Dict[str, Any] = field(default_factory=dict)
 
-    notes: str = ""
+    excluded_features: Dict[str, Any] = field(default_factory=dict)
 
 
-# ============================================================
-# RULE
-# ============================================================
-
-class Rule(BaseModel):
-    """
-    Structured computational representation
-    of a Pāṇinian grammatical rule.
-    """
-
-    model_config = ConfigDict(
-        validate_assignment=True
-    )
-
-    id: str
+@dataclass
+class Rule:
+    rule_id: str
 
     sutra: str
 
     name: str
 
-    description: str = ""
+    conditions: List[RuleCondition]
 
-    phenomenon: str = ""
-
-    conditions: List[RuleCondition] = Field(
-        default_factory=list
-    )
-
-    operation: RuleOperation
-
-    scope: RuleScope = Field(
-        default_factory=RuleScope
-    )
+    operations: List[RuleOperation]
 
     priority: int = 0
 
-    dependencies: List[str] = Field(
-        default_factory=list
-    )
+    scope: RuleScope = field(default_factory=RuleScope)
 
-    blocking_type: BlockingType = (
-        BlockingType.NONE
-    )
+    dependencies: List[str] = field(default_factory=list)
 
-    blocks: List[str] = Field(
-        default_factory=list
-    )
+    blocking_type: BlockingType = BlockingType.NONE
 
-    blocked_by: List[str] = Field(
-        default_factory=list
-    )
+    blocks: List[str] = field(default_factory=list)
 
-    exceptions: List[str] = Field(
-        default_factory=list
-    )
-
-    tags: List[str] = Field(
-        default_factory=list
-    )
+    blocked_by: List[str] = field(default_factory=list)
 
     enabled: bool = True
 
-    source_reference: Optional[str] = None
+    # Whether this rule is allowed to fire repeatedly
+    # during a single derivation.
+    repeatable: bool = False
 
-    validation_status: str = "unvalidated"
+    status: str = "experimental"
 
-    @model_validator(mode="after")
-    def validate_rule(self):
+    description: str = ""
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def validate(self) -> None:
+        if not self.rule_id:
+            raise ValueError("rule_id cannot be empty")
+
+        if not self.sutra:
+            raise ValueError(f"{self.rule_id}: sutra cannot be empty")
 
         if self.priority < 0:
+            raise ValueError(f"{self.rule_id}: priority cannot be negative")
 
+        if self.rule_id in self.dependencies:
             raise ValueError(
-                "Rule priority cannot be negative."
+                f"{self.rule_id}: rule cannot depend on itself"
             )
 
-        if self.id in self.dependencies:
 
-            raise ValueError(
-                "A rule cannot depend on itself."
-            )
-
-        if (
-            self.blocking_type
-            == BlockingType.BLOCKS
-            and not self.blocks
-        ):
-
-            raise ValueError(
-                "A BLOCKS rule must specify blocked rules."
-            )
-
-        if (
-            self.blocking_type
-            == BlockingType.BLOCKED_BY
-            and not self.blocked_by
-        ):
-
-            raise ValueError(
-                "A BLOCKED_BY rule must specify blocking rules."
-            )
-
-        return self
-
-
-# ============================================================
-# DERIVATION RECORD
-# ============================================================
-
-class DerivationRecord(BaseModel):
+@dataclass
+class GrammarState:
     """
-    One transition in a derivation.
+    Complete computational state of a derivation.
+
+    tokens:
+        Current sequence being transformed.
+
+    features:
+        Global grammar-state features.
+
+    active_rules:
+        Rules currently enabled.
+
+    step:
+        Derivation step number.
     """
 
-    step_number: int
+    tokens: List[StateToken] = field(default_factory=list)
+
+    features: Dict[str, Any] = field(default_factory=dict)
+
+    active_rules: List[str] = field(default_factory=list)
+
+    step: int = 0
+
+    history_id: str = "initial"
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def clone(self) -> "GrammarState":
+        return copy.deepcopy(self)
+
+    @property
+    def surface(self) -> str:
+        return "".join(
+            token.surface
+            for token in self.tokens
+            if token.active
+        )
+
+    def refresh_positions(self) -> None:
+        position = 0
+
+        for token in self.tokens:
+            if token.active:
+                token.position = position
+                position += 1
+
+    def get_active_tokens(self) -> List[StateToken]:
+        return [
+            token
+            for token in self.tokens
+            if token.active
+        ]
+
+    def get_token(self, token_id: str) -> Optional[StateToken]:
+        for token in self.tokens:
+            if token.token_id == token_id:
+                return token
+
+        return None
+
+    def snapshot(self) -> Dict[str, Any]:
+        self.refresh_positions()
+
+        return {
+            "step": self.step,
+            "surface": self.surface,
+            "tokens": [
+                {
+                    "token_id": token.token_id,
+                    "surface": token.surface,
+                    "source": token.source,
+                    "features": copy.deepcopy(token.features),
+                    "markers": list(token.markers),
+                    "position": token.position,
+                    "active": token.active,
+                }
+                for token in self.tokens
+            ],
+            "features": copy.deepcopy(self.features),
+            "active_rules": list(self.active_rules),
+            "history_id": self.history_id,
+            "metadata": copy.deepcopy(self.metadata),
+        }
+
+
+@dataclass
+class DerivationRecord:
+    step: int
 
     rule_id: str
 
     sutra: str
 
-    before_form: str
+    rule_name: str
 
-    after_form: str
+    before_surface: str
+
+    after_surface: str
+
+    before_state: Dict[str, Any]
+
+    after_state: Dict[str, Any]
 
     changed: bool
 
     explanation: str = ""
 
-    before_features: Dict[str, Any] = Field(
-        default_factory=dict
-    )
-
-    after_features: Dict[str, Any] = Field(
-        default_factory=dict
-    )
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-# ============================================================
-# GRAMMAR STATE
-# ============================================================
+@dataclass
+class DerivationResult:
+    input_surface: str
 
-class GrammarState(BaseModel):
-    """
-    Complete representation of the current grammatical state.
-    """
-
-    model_config = ConfigDict(
-        validate_assignment=True
-    )
-
-    form: str
-
-    tokens: List[StateToken] = Field(
-        default_factory=list
-    )
-
-    morphemes: List[Morpheme] = Field(
-        default_factory=list
-    )
-
-    features: Dict[str, Any] = Field(
-        default_factory=dict
-    )
-
-    applied_rules: List[str] = Field(
-        default_factory=list
-    )
-
-    history: List[DerivationRecord] = Field(
-        default_factory=list
-    )
-
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict
-    )
-
-    def snapshot(self) -> "GrammarState":
-
-        return self.model_copy(
-            deep=True
-        )
-
-
-# ============================================================
-# DERIVATION RESULT
-# ============================================================
-
-class DerivationResult(BaseModel):
-
-    input_form: str
-
-    output_form: str
-
-    initial_state: GrammarState
+    output_surface: str
 
     final_state: GrammarState
 
-    steps: List[DerivationRecord] = Field(
-        default_factory=list
-    )
+    records: List[DerivationRecord]
 
-    rules_applied: List[str] = Field(
-        default_factory=list
-    )
+    halted: bool = False
 
-    rules_skipped: List[str] = Field(
-        default_factory=list
-    )
+    halt_reason: Optional[str] = None
 
-    success: bool = True
+    applied_rules: List[str] = field(default_factory=list)
 
-    errors: List[str] = Field(
-        default_factory=list
-    )
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-# ============================================================
-# EXPERIMENT RESULT
-# ============================================================
+@dataclass
+class ExperimentResult:
+    baseline: DerivationResult
 
-class ExperimentResult(BaseModel):
-
-    input_form: str
-
-    original_output: str
-
-    counterfactual_output: str
+    counterfactual: DerivationResult
 
     disabled_rules: List[str]
 
     output_changed: bool
 
-    original_steps: List[DerivationRecord]
+    baseline_output: str
 
-    counterfactual_steps: List[DerivationRecord]
+    counterfactual_output: str
 
-    changed_steps: List[int] = Field(
-        default_factory=list
-    )
+    changed_steps: List[Dict[str, Any]]
+
+    impact_summary: Dict[str, Any] = field(default_factory=dict)

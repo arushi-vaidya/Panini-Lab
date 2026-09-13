@@ -1,735 +1,828 @@
 # PĀṆINI-LAB
-
-## Counterfactual Analysis of Pāṇinian Rule Dependencies
-
-> **Ancient Rules. Modern Exploration. Measurable Insights.**
-
-PĀṆINI-LAB is a research-oriented computational framework for studying the
-operational behaviour of a selected subset of Pāṇinian grammatical rules.
-
-The core idea is to treat a computational representation of the grammatical
-rule system as an **experimental object**.
-
-Instead of only executing rules, PĀṆINI-LAB aims to allow controlled
-interventions such as:
-
-- Removing rules
-- Disabling rules
-- Reordering rules
-- Modifying rule conditions
-- Comparing original and counterfactual derivations
-- Measuring rule impact
-- Discovering rule dependencies
-
-The project is scoped progressively rather than attempting to implement the
-entire Aṣṭādhyāyī at once.
-
+## A Counterfactual Computational Framework for Rule-Dependency Analysis of Pāṇinian Grammar
+PĀṆINI-LAB is a research-oriented computational framework for studying Pāṇinian grammar as an executable rule system.
+The project does **not** attempt to claim that Pāṇini has never been computationalized. Existing research has already explored computational modelling, parsing, generation, rule interaction, and formalization of Pāṇinian grammar.
+The distinctive goal of PĀṆINI-LAB is to treat the computational grammar itself as an object of controlled experimentation. The framework is designed to support rule tracing, dependency analysis, counterfactual interventions, rule-impact measurement, and eventually minimal-rule discovery.
 ---
+## Project Vision
+The central research question is:
+> **What can we learn about the structure and importance of a grammatical rule system by systematically intervening in its rules and observing the resulting derivations?**
+Instead of only asking:
+```text
+Input → What is the output?
 
-# 1. Project Vision
+PĀṆINI-LAB asks:
 
-Traditional computational approaches to Sanskrit and Pāṇinian grammar have
-focused on modelling, parsing, generation, simulation, and NLP.
+Input
+  ↓
+Which rules fired?
+  ↓
+What state did each rule receive?
+  ↓
+What state did it produce?
+  ↓
+What depends on what?
+  ↓
+What happens if a rule is removed?
+  ↓
+How does the derivation change?
 
-PĀṆINI-LAB takes an experimental perspective:
+This makes the system conceptually similar to a debugger for a formal grammar.
 
-> **Instead of only asking "What derivation does the rule system produce?",
-> we ask "What happens to the derivation when the rule system is changed?"**
+⸻
 
-This enables computational experiments over grammatical rule interactions.
+Current Project Status
 
----
+Phase	Component	Status
+Phase 1A	Rule schema and rule representation	✅ Complete
+Phase 1B	Computational derivational state	✅ Complete
+Phase 1B	Rule conditions and state transitions	✅ Complete
+Phase 1B	Derivation history and trace	✅ Complete
+Phase 1B	Counterfactual rule disabling	✅ Complete
+Phase 1B	Automated tests	✅ Complete
+Phase 2	Authentic validated Pāṇinian rule subset	🔜 Next
+Phase 3	Rule-dependency graph	⏳ Planned
+Phase 4	Advanced counterfactual engine	⏳ Planned
+Phase 5	Rule-impact and redundancy analysis	⏳ Planned
+Phase 6	FastAPI research API	⏳ Planned / basic structure exists
+Phase 7	React interactive interface	⏳ Planned
+Phase 8	Experimental evaluation	⏳ Planned
+Phase 9	Research paper and final evaluation	⏳ Planned
 
-# 2. Current Project Status
+⸻
 
-| Component | Status |
-|---|---|
-| Project architecture | ✅ Complete |
-| Rule schema | ✅ Complete |
-| Rule conditions | ✅ Complete |
-| Rule operations | ✅ Complete |
-| Rule scope metadata | ✅ Complete |
-| Dependencies | ✅ Complete |
-| Blocking metadata | ✅ Complete |
-| Grammar state model | ✅ Complete |
-| Derivation records | ✅ Complete |
-| Rule registry | ✅ Complete |
-| Rule execution | ✅ Complete |
-| Counterfactual disabling | ✅ Complete |
-| Original vs counterfactual comparison | ✅ Complete |
-| Automated tests | ✅ Complete |
-| Authentic Pāṇinian rule subset | ⬜ Next |
-| Advanced grammatical semantics | ⬜ |
-| Dependency graph | ⬜ |
-| Rule impact metrics | ⬜ |
-| FastAPI API | ⬜ |
-| React dashboard | ⬜ |
-| Experimental evaluation | ⬜ |
-| Research paper | ⬜ |
+Phase 1A — Rule Representation
 
----
-
-# 3. Phase 1A — Strong Rule Schema
-
-## Status: ✅ COMPLETE
-
-Phase 1A established the computational foundation required to represent
-grammatical rules as structured objects instead of simple string
-replacements.
-
-### 3.1 Structured Rule Representation
+Phase 1A established the structured representation of a grammatical rule.
 
 Each rule can contain:
 
-```text
-Rule ID
-Sūtra reference
-Name
-Description
-Phenomenon
-Conditions
-Operation
-Scope
-Priority
-Dependencies
-Blocking information
-Exceptions
-Tags
-Enabled/disabled state
-Source reference
-Validation status
-````
+* Rule ID
+* Sūtra reference
+* Name
+* Conditions
+* Operations
+* Priority
+* Scope
+* Dependencies
+* Blocking metadata
+* Enabled/disabled state
+* Repeatability policy
+* Status
+* Description
+* Additional metadata
 
----
+The rule representation is deliberately designed to be extensible so that later phases can represent more complex grammatical behaviour without redesigning the complete architecture.
 
-## 3.2 Rule Conditions
+⸻
 
-The schema currently supports:
+Phase 1B — Computational Derivational State
 
-### Pattern conditions
+Phase 1B extends the rule schema into an executable state-transition system.
 
-```text
-Current form contains a specified pattern
-```
+The key abstraction is:
 
-### Feature conditions
+Grammar State
+      ↓
+Rule Condition Evaluation
+      ↓
+Rule Application
+      ↓
+New Grammar State
+      ↓
+Derivation Record
 
-```text
-A grammatical feature must have a specified value
-```
+Every successful rule application produces a new state and a trace record.
 
-The schema also reserves explicit representations for:
+⸻
 
-```text
-Context conditions
-Custom conditions
-```
+1. StateToken
 
-These will receive formal evaluators as the grammatical engine becomes more
-sophisticated.
+A StateToken represents an individual computational token in the current derivational state.
 
----
+A token contains:
 
-# 4. Rule Operations
-
-The rule schema currently supports:
-
-```text
-SUBSTITUTE
-INSERT
-DELETE
-FEATURE_UPDATE
-CUSTOM
-```
-
-For example:
-
-```text
-SUBSTITUTE
-
-अइ → ए
-```
-
-or:
-
-```text
-FEATURE_UPDATE
-
-category = verb
-        ↓
-tense = present
-```
-
-The operation model is extensible so additional Pāṇinian operations can be
-introduced without redesigning the entire rule representation.
-
----
-
-# 5. Rule Scope
-
-Rules can currently store contextual metadata including:
-
-```text
-Adhikāra
-Anuvṛtti
-Domain
-Notes
-```
-
-These fields establish the data model required for representing contextual
-information associated with grammatical rules.
-
-They should not be interpreted as a complete formal implementation of these
-traditional concepts yet.
-
----
-
-# 6. Rule Interaction Metadata
-
-The schema supports:
-
-```text
-Dependencies
-Blocking relationships
-Exceptions
-Priority
-```
+Token ID
+Surface form
+Source / provenance
+Features
+Markers
+Position
+Active / inactive status
 
 Example:
 
-```text
-R001
-  │
-  ├── dependency → R002
-  │
-  ├── blocks → R003
-  │
-  └── priority → 100
-```
+StateToken(
+    token_id="t1",
+    surface="ग",
+    source="input",
+    features={"category": "root"},
+    markers=[],
+    position=0,
+    active=True
+)
 
-This metadata will later feed the rule dependency graph and counterfactual
-analysis.
+Stable token IDs allow future versions of the system to track how individual elements move through a derivation.
 
----
+⸻
 
-# 7. Grammar State
+2. GrammarState
 
-## Status: ✅ INITIAL VERSION COMPLETE
+GrammarState represents the complete computational state at a particular point in a derivation.
 
-PĀṆINI-LAB no longer represents a derivation only as a string.
+It contains:
 
-A `GrammarState` contains:
+* Current tokens
+* Global grammatical features
+* Active rules
+* Derivation step number
+* History identifier
+* Additional metadata
 
-```text
-Current form
-Tokens
-Morphemes
-Grammatical features
-Applied rules
-Derivation history
-Metadata
-```
-
-### State representation
-
-```text
-                 GRAMMAR STATE
-                      │
-        ┌─────────────┼─────────────┐
-        ↓             ↓             ↓
-      FORM          TOKENS       MORPHEMES
-        │             │             │
-        └─────────────┼─────────────┘
-                      ↓
-                  FEATURES
-                      ↓
-                 RULE HISTORY
-```
-
-The current implementation establishes the data structure. More detailed
-linguistic state semantics will be developed in subsequent phases.
-
----
-
-# 8. Derivation Engine
-
-## Status: ✅ COMPLETE FOR CURRENT SCHEMA
-
-The derivation engine:
-
-1. Creates an initial grammar state.
-2. Loads the registered rules.
-3. Orders rules according to priority.
-4. Evaluates rule conditions.
-5. Applies eligible operations.
-6. Creates a new grammatical state.
-7. Records the transformation.
-8. Tracks applied rules.
-9. Tracks skipped/disabled rules.
-10. Produces a structured derivation result.
-
-A derivation therefore becomes traceable:
-
-```text
-INPUT
-  ↓
-STATE 0
-  ↓ R001
-STATE 1
-  ↓ R007
-STATE 2
-  ↓ R012
-STATE 3
-  ↓
-OUTPUT
-```
-
----
-
-# 9. Counterfactual Experimentation
-
-## Status: 🟡 BASIC IMPLEMENTATION COMPLETE
-
-The first counterfactual capability is implemented:
-
-```text
-Disable selected rule
-        ↓
-Re-run derivation
-        ↓
-Compare with original
-```
+The current surface representation is generated from active tokens.
 
 Example:
 
-```text
-ORIGINAL
-
+Tokens:
+[t1 = अ, t2 = इ]
+Surface:
 अइ
- ↓
-R001
- ↓
+Step:
+0
+
+After a transformation:
+
+Tokens:
+[t1 = ए]
+Surface:
 ए
+Step:
+1
 
+⸻
 
-COUNTERFACTUAL
+Rule Conditions
 
-अइ
- ↓
+Phase 1B currently supports the following condition types:
+
+Pattern condition
+
+Checks whether a pattern occurs in the current active surface sequence.
+
+{
+  "condition_type": "pattern",
+  "pattern": "अइ"
+}
+
+Feature condition
+
+Checks token-level grammatical features.
+
+{
+  "condition_type": "feature",
+  "feature_key": "category",
+  "feature_value": "verb"
+}
+
+Context condition
+
+Allows a pattern to be evaluated together with left and/or right contextual constraints.
+
+Marker condition
+
+Checks whether a token carries a particular computational marker.
+
+Custom condition
+
+Reserved for future specialized linguistic evaluators.
+
+Conditions can also be negated using:
+
+"negate": true
+
+⸻
+
+Rule Operations
+
+Phase 1B supports the following operation types:
+
+Substitute
+
+Target → Replacement
+
+Insert
+
+Adds a new token at a specified position.
+
+Delete
+
+Marks a target token as inactive rather than destroying its identity. This preserves derivational information for future analysis.
+
+Feature update
+
+Updates a grammatical feature attached to a token.
+
+Marker add
+
+Adds a computational marker to a token.
+
+Marker remove
+
+Removes a computational marker.
+
+Custom
+
+Reserved for future operations requiring specialized linguistic logic.
+
+⸻
+
+Rule Scope
+
+Rules can specify where they are allowed to operate through:
+
+* Domains
+* Categories
+* Required global features
+* Excluded global features
+
+This provides the foundation for more precise grammatical environments in later phases.
+
+⸻
+
+Rule Interaction Metadata
+
+The rule model contains explicit fields for:
+
+Dependencies
+Blocking type
+Blocks
+Blocked by
+Priority
+
+These fields are currently part of the computational representation and validation layer.
+
+The full linguistic interpretation of rule precedence, blocking, and interaction will be developed using the validated Pāṇinian rule subset in later phases.
+
+⸻
+
+Derivation Engine
+
+The DerivationEngine executes a collection of enabled rules against an input state.
+
+Rules are currently ordered deterministically using:
+
+Priority descending
+Rule ID ascending
+
+A successful rule application produces:
+
+Before State
+      ↓
+Rule
+      ↓
+After State
+
+Each successful transformation is stored as a DerivationRecord.
+
+The record contains:
+
+* Step number
+* Rule ID
+* Sūtra reference
+* Rule name
+* Before surface
+* After surface
+* Complete before-state snapshot
+* Complete after-state snapshot
+* Explanation
+* Metadata
+
+This trace is essential for the future dependency graph and counterfactual analysis.
+
+⸻
+
+Rule Repeatability
+
+Rules have an explicit repeatable property.
+
+By default:
+
+"repeatable": false
+
+A non-repeatable rule can fire only once during a single derivation.
+
+This prevents rules such as synthetic insertion rules from repeatedly modifying the same state indefinitely.
+
+Example:
+
+Input
+  ↓
+ग
+  ↓ R003
+गअ
+  ↓
+R003 already fired
+  ↓
+Stop
+
+Repeatable rules can be enabled later when the linguistic semantics of repeated application are explicitly defined.
+
+⸻
+
+Counterfactual Experimentation
+
+One of the central concepts of PĀṆINI-LAB is counterfactual analysis.
+
+For an input and a rule set, the system can execute two derivations:
+
+                 SAME INPUT
+                     │
+          ┌──────────┴──────────┐
+          ↓                     ↓
+      BASELINE            COUNTERFACTUAL
+          │                     │
+     All rules            Selected rules
+       enabled                disabled
+          │                     │
+          ↓                     ↓
+     Derivation A          Derivation B
+          │                     │
+          └──────────┬──────────┘
+                     ↓
+                COMPARISON
+
+The experiment records:
+
+* Baseline output
+* Counterfactual output
+* Whether the output changed
+* Number of derivation steps
+* Changed derivation steps
+* Rules involved in the changed steps
+
+Example:
+
+Baseline:
+अइ → ए
+Counterfactual:
 R001 disabled
- ↓
-अइ
-```
-
-The experiment engine currently records:
-
-```text
-Original output
-Counterfactual output
-Disabled rules
-Whether output changed
-Original derivation steps
-Counterfactual derivation steps
-Changed derivation steps
-```
-
-### Still to be implemented
-
-```text
-Rule removal
-Rule reordering
-Rule modification
-Batch rule experiments
-Multi-rule interventions
-```
-
----
-
-# 10. Current Rule Dataset
-
-The current dataset contains prototype/test rules used to validate the
-computational architecture.
-
-These rules are explicitly marked with validation statuses such as:
-
-```text
-illustrative
-synthetic
-```
-
-They are **not yet the project's final linguistically validated Pāṇinian
-rule set**.
-
-This distinction is intentional.
-
-The next milestone is to construct a carefully selected and academically
-validated subset of authentic Pāṇinian rules.
-
----
-
-# 11. Testing
-
-## Status: ✅ COMPLETE
-
-Automated tests currently validate:
-
-```text
-✓ Rule schema
-✓ Grammar state
-✓ Rule loading
-✓ Rule execution
-✓ Feature conditions
-✓ Rule disabling
-✓ Rule reset
-✓ Counterfactual comparison
-✓ Invalid condition detection
-✓ Invalid operation detection
-✓ Self-dependency validation
-```
-
-Run:
-
-```bash
-cd backend
-pytest -v
-```
-
----
-
-# 12. Technology Stack
-
-| Component            | Technology     |
-| -------------------- | -------------- |
-| Programming Language | Python         |
-| Data Validation      | Pydantic       |
-| Rule Engine          | Custom Python  |
-| Database             | SQLite         |
-| Graph Analysis       | NetworkX       |
-| Data Analysis        | Pandas + NumPy |
-| Backend API          | FastAPI        |
-| Frontend             | React + Vite   |
-| Graph Visualization  | React Flow     |
-| Charts               | Plotly         |
-| Testing              | Pytest         |
-| Version Control      | Git + GitHub   |
-| Development          | VS Code        |
-| Containerization     | Not used       |
-
----
-
-# 13. Architecture
-
-Current architecture:
-
-```text
-                    rules.json
-                        │
-                        ▼
-                ┌───────────────┐
-                │ Rule Registry │
-                └───────┬───────┘
-                        │
-                        ▼
-                ┌───────────────┐
-                │ Rule Schema   │
-                └───────┬───────┘
-                        │
-                        ▼
-                ┌───────────────┐
-                │ Rule Engine   │
-                └───────┬───────┘
-                        │
-                        ▼
-                ┌───────────────┐
-                │ Grammar State │
-                └───────┬───────┘
-                        │
-                        ▼
-                ┌───────────────┐
-                │ Derivation    │
-                │ Trace         │
-                └───────┬───────┘
-                        │
-                 ┌──────┴──────┐
-                 ▼             ▼
-             ORIGINAL    COUNTERFACTUAL
-                 │             │
-                 └──────┬──────┘
-                        ▼
-                    COMPARISON
-```
-
----
+अइ → अइ
+Output changed:
+TRUE
 
-# 14. Development Roadmap
+This is the foundation for future rule-impact metrics.
 
-## Phase 1A — Strong Rule Schema
+⸻
 
-**✅ COMPLETE**
+Current Rule Dataset
 
-Structured representation of rules, conditions, operations, scope,
-dependencies, blocking metadata, and grammatical state.
+The current Phase 1B dataset intentionally contains illustrative and synthetic rules for testing the framework.
 
----
+Rule	Purpose	Status
+R001	Illustrative vowel transformation	Illustrative
+R002	Feature-state transition	Synthetic
+R003	Positional insertion	Synthetic
+R004	Token deletion	Synthetic
+R005	Marker assignment	Synthetic
 
-## Phase 1B — Advanced Grammar State
+Important research note
 
-**⬜ NEXT**
+R001 references Pāṇinian material for architectural testing, but it is not claimed to be a complete formal encoding of the referenced sūtra.
 
-Improve the state representation with:
+The synthetic rules are deliberately separated from the authentic grammatical rule set.
 
-* Token-level provenance
-* Morpheme relationships
-* Transformation locations
-* Phonological features
-* Morphological features
-* State identifiers
-* Parent/child state relationships
-* Formal transition metadata
+The next phase will introduce a small, carefully verified subset of actual Pāṇinian rules and validated derivation examples.
 
----
+⸻
 
-## Phase 2 — Validated Pāṇinian Rule Set
+Testing
 
-**⬜**
+Automated tests are maintained under:
 
-Select and implement a limited set of authentic rules.
+backend/tests/
 
-Initial target:
+Run the complete test suite using:
 
-```text
-10–15 validated rules
-        ↓
-validated derivations
-        ↓
-20–30 rules
-        ↓
-additional phenomena
-```
+python -m pytest -q
 
-Each rule should have:
+Phase 1B tests cover areas including:
 
-```text
-Source
-Sūtra
-Interpretation
-Formal condition
-Operation
-Expected derivations
-Validation examples
-```
+* Token features
+* Token markers
+* Grammar-state construction
+* State snapshots
+* Substitution
+* Insertion
+* Deletion
+* Feature updates
+* Counterfactual experiments
+* Rule registry loading
+* Rule enabling/disabling
 
----
+The test suite is intended to ensure that architectural changes do not silently break existing derivation behaviour.
 
-## Phase 3 — Rule Dependency Graph
+⸻
 
-**⬜**
+Technology Stack
 
-Construct a graph representing:
+Backend
 
-```text
-Rule → Rule dependencies
-Rule → Rule interactions
-Rule → downstream effects
-```
+* Python 3.11+
+* FastAPI
+* Pydantic
+* Custom Python rule engine
+* SQLite — planned for persistent experiment data
+* NetworkX — planned for dependency graphs
+* NumPy
+* Pandas
 
-Technology:
+Frontend
 
-```text
-NetworkX
-```
+Planned:
 
----
+* React
+* Vite
+* React Flow
+* Plotly
 
-## Phase 4 — Counterfactual Engine
+Development
 
-**🟡 BASIC VERSION COMPLETE**
+* Git
+* GitHub
+* Visual Studio Code
 
-Extend experimentation to:
+Deployment
 
-```text
-Remove
-Disable
-Reorder
-Modify
-```
+Docker is not used in this project.
 
-and support automated batch experiments.
+⸻
 
----
+Project Architecture
 
-## Phase 5 — Impact Analysis
+Current conceptual architecture:
 
-**⬜**
+                 Sanskrit / Grammar Input
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Derivation      │
+                  │ Engine          │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Grammar State   │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Rule Evaluation │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ State Transition│
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Rule Trace      │
+                  └────────┬────────┘
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ Counterfactual  │
+                  │ Experiment      │
+                  └────────┬────────┘
+                           │
+                           ▼
+                    Comparative Data
 
-Develop quantitative measures including:
+Future architecture:
 
-### Rule Criticality
+Input
+  ↓
+Derivation Engine
+  ↓
+Rule Trace + State History
+  ↓
+Dependency Analyzer
+  ↓
+Counterfactual Engine
+  ↓
+Impact / Redundancy Analysis
+  ↓
+Interactive Visualization
 
-How strongly a rule affects successful derivations.
+⸻
 
-### Rule Influence
+Development Roadmap
 
-How many downstream states/rules are affected.
+Phase 1A — Rule Schema
 
-### Rule Dependency
+Completed.
 
-Direct and indirect dependency relationships.
+Goal:
 
-### Rule Redundancy
+Define a flexible machine-readable representation for grammatical rules.
 
-Whether removing a rule leaves selected derivations unchanged.
+⸻
 
-Metrics will be formally defined and evaluated rather than arbitrarily
-assigned.
+Phase 1B — Derivational State
 
----
+Completed.
 
-## Phase 6 — FastAPI
+Goal:
 
-**⬜**
+Make grammatical rules operate on explicit computational states and produce traceable state transitions.
 
-Expose the engine through APIs:
+Deliverables completed:
 
-```text
+* Token model
+* Features
+* Markers
+* State snapshots
+* Conditions
+* Operations
+* Derivation history
+* Rule repeatability control
+* Counterfactual baseline comparison
+* Automated tests
+
+⸻
+
+Phase 2 — Authentic Pāṇinian Rule Subset
+
+Next.
+
+The project will encode a deliberately limited and academically defensible subset of actual Pāṇinian rules.
+
+Each selected rule should have:
+
+1. Verified sūtra reference
+2. Clearly defined grammatical environment
+3. Computational representation
+4. Explicit operation
+5. Interaction/precedence information where applicable
+6. At least one validated derivation example
+7. Tests covering expected behaviour
+
+The initial goal is correctness over quantity.
+
+A small validated rule set is preferable to a large collection of uncertain encodings.
+
+⸻
+
+Phase 3 — Rule Dependency Graph
+
+Build a graph where:
+
+Rule A → Rule B
+
+means that Rule B’s successful application depends on a state produced or modified by Rule A.
+
+Potential graph properties:
+
+* Incoming dependencies
+* Outgoing dependencies
+* Rule centrality
+* Dependency chains
+* Blocking relationships
+* Derivation-path structure
+
+NetworkX will be used for the initial implementation.
+
+⸻
+
+Phase 4 — Advanced Counterfactual Engine
+
+Extend counterfactual experiments beyond simple disabling.
+
+Planned interventions:
+
+Remove rule
+Disable rule
+Reorder rules
+Modify rule condition
+Modify rule operation
+Change priority
+
+The system will compare baseline and altered derivations automatically.
+
+⸻
+
+Phase 5 — Rule Impact Analysis
+
+Develop quantitative measurements such as:
+
+* Number of derivations affected
+* Output-change rate
+* Number of downstream rules affected
+* Average derivation distance affected
+* Dependency centrality
+* Rule sensitivity
+* Potential redundancy indicators
+
+These measurements will form the basis for experimental research.
+
+⸻
+
+Phase 6 — API Layer
+
+Expose the computational engine through FastAPI.
+
+Planned endpoints include:
+
 GET  /rules
-GET  /rules/{id}
-
+GET  /rules/{rule_id}
 POST /derive
 POST /experiment
 
-POST /rules/{id}/enable
-POST /rules/{id}/disable
+The API will eventually support graph queries and experiment management.
 
-GET /dependencies
-GET /analysis
-```
+⸻
 
----
+Phase 7 — Interactive Interface
 
-## Phase 7 — Interactive Dashboard
+The frontend will allow users to:
 
-**⬜**
+1. Enter an input.
+2. Run a derivation.
+3. Inspect every rule application.
+4. View intermediate states.
+5. Inspect rule dependencies.
+6. Disable or modify rules.
+7. Re-run the derivation.
+8. Compare baseline and counterfactual results.
+9. Visualize impact.
 
-Planned interface:
+⸻
 
-```text
-Sanskrit Input
-      ↓
-Original Derivation
-      ↓
-Select Rule
-      ↓
-Remove / Reorder / Modify
-      ↓
-Counterfactual Derivation
-      ↓
-Comparison
-      ↓
-Dependency Graph
-      ↓
-Impact Metrics
-```
+Phase 8 — Experimental Evaluation
 
----
+Experiments will evaluate questions such as:
 
-## Phase 8 — Experimental Evaluation
+* Which rules have the largest downstream influence?
+* Which rules are repeatedly involved in successful derivations?
+* Which rules produce the largest state changes?
+* Which interventions cause derivation failure?
+* Are there rules whose removal does not affect selected derivations?
+* How strongly are rules connected through derivational dependencies?
 
-**⬜**
+Results will be stored in a reproducible experimental format.
 
-Conduct reproducible experiments over the validated rule subset.
+⸻
 
-Evaluation will include:
+Phase 9 — Research Output
 
-* Baseline derivations
-* Counterfactual experiments
-* Rule ablations
-* Dependency analysis
-* Impact measurements
-* Error analysis
-* Qualitative analysis
-* Comparison with relevant existing systems
+Expected outputs include:
 
----
+1. Working software prototype
 
-## Phase 9 — Research Paper
+An interactive computational environment for controlled analysis of a selected Pāṇinian rule system.
 
-**⬜**
+2. Research paper
 
-The research paper will cover:
+The paper will document:
 
-1. Introduction
-2. Background
-3. Related Work
-4. Research Gap
-5. Rule Representation
-6. Derivation Architecture
-7. Counterfactual Methodology
-8. Dependency Analysis
-9. Experimental Design
-10. Results
-11. Discussion
-12. Limitations
-13. Conclusion
+* Computational representation
+* Rule encoding methodology
+* Dependency modelling
+* Counterfactual methodology
+* Experimental setup
+* Quantitative results
+* Limitations
+* Future work
 
----
+3. Software copyright / research artifact
 
-# 15. Definition of Done
+Copyright protection and publication are realistic potential outputs for the software artifact.
 
-PĀṆINI-LAB will be considered a successful research prototype when a user
-can:
+Patent feasibility, if considered, will require a separate prior-art and patentability assessment rather than being assumed in advance.
 
-```text
-Enter/select a Sanskrit derivation
-            ↓
-View the original derivation
-            ↓
-Inspect every rule application
-            ↓
-Select a grammatical rule
-            ↓
-Remove / disable / reorder / modify it
-            ↓
-Re-run the derivation
-            ↓
-Compare original vs altered derivation
-            ↓
-Identify downstream effects
-            ↓
-Inspect rule dependencies
-            ↓
-Measure rule impact
-            ↓
-Visualize the results
-```
+⸻
 
----
+Definition of Done for Phase 1B
 
-# 16. Current Milestone
+Phase 1B is considered complete when:
 
-```text
-╔══════════════════════════════════════╗
-║       PĀṆINI-LAB DEVELOPMENT         ║
-╠══════════════════════════════════════╣
-║                                      ║
-║ Phase 1A  Strong Rule Schema     ✅  ║
-║                                      ║
-║ Phase 1B  Advanced Grammar State ⬜  ║
-║ Phase 2   Validated Rule Set     ⬜  ║
-║ Phase 3   Dependency Graph       ⬜  ║
-║ Phase 4   Counterfactual Engine  🟡  ║
-║ Phase 5   Impact Analysis        ⬜  ║
-║ Phase 6   FastAPI                ⬜  ║
-║ Phase 7   React Dashboard        ⬜  ║
-║ Phase 8   Evaluation             ⬜  ║
-║ Phase 9   Research Paper         ⬜  ║
-║                                      ║
-╚══════════════════════════════════════╝
-```
+* [x]	Rules can be represented structurally.
+* [x]	Tokens have stable identities.
+* [x]	Tokens can carry features.
+* [x]	Tokens can carry markers.
+* [x]	Tokens maintain positions.
+* [x]	Grammar state can be snapshotted.
+* [x]	Conditions can be evaluated.
+* [x]	State-transforming operations can be executed.
+* [x]	Derivation steps are recorded.
+* [x]	Rule applications are deterministic.
+* [x]	Non-repeatable rules cannot fire indefinitely.
+* [x]	Rules can be disabled for counterfactual experiments.
+* [x]	Baseline and counterfactual derivations can be compared.
+* [x]	Automated tests cover the core behaviour.
 
-## Immediate next milestone
+⸻
 
-> **Phase 1B — Advanced Grammar State and derivational semantics.**
+Repository Structure
 
-The next implementation should build on the completed Phase 1A schema rather
-than replacing it.
+panini-lab/
+│
+├── README.md
+├── .gitignore
+│
+└── backend/
+    │
+    ├── requirements.txt
+    │
+    ├── app/
+    │   ├── __init__.py
+    │   │
+    │   ├── main.py
+    │   │
+    │   ├── core/
+    │   │   ├── __init__.py
+    │   │   ├── models.py
+    │   │   ├── rule_engine.py
+    │   │   ├── derivation.py
+    │   │   ├── registry.py
+    │   │   └── experiment.py
+    │   │
+    │   └── data/
+    │       └── rules.json
+    │
+    └── tests/
+        ├── __init__.py
+        ├── test_engine.py
+        ├── test_phase1a.py
+        └── test_phase1b.py
+
+⸻
+
+Running the Project
+
+Create and activate the virtual environment:
+
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+
+Install dependencies:
+
+python -m pip install -r requirements.txt
+
+Run tests:
+
+python -m pytest -q
+
+Run the application:
+
+python -m app.main
+
+For the FastAPI development server:
+
+uvicorn app.main:app --reload
+
+API documentation will be available at:
+
+http://127.0.0.1:8000/docs
+
+⸻
+
+Research Positioning
+
+PĀṆINI-LAB is positioned at the intersection of:
+
+* Indian Knowledge Systems
+* Sanskrit computational linguistics
+* Formal grammar
+* Rule-based systems
+* Program analysis
+* Dependency graphs
+* Counterfactual analysis
+* Interactive visualization
+
+The project’s contribution is intended to be methodological: using controlled computational interventions to study the behaviour and structural dependencies of a formal grammatical rule system.
+
+The project therefore focuses on experimentally analysing the rule system rather than merely implementing a Sanskrit parser or generator.
+
+⸻
+
+Current Milestone
+
+Phase 1B — COMPLETE ✅
+
+The computational foundation is now ready for the next research milestone:
+
+Phase 2 — Build and validate the first authentic Pāṇinian rule subset.
+
+At that stage, synthetic rules will no longer be sufficient for the main experiments. Every rule included in the research dataset should be traceable to a documented grammatical source and tested against known derivational behaviour.
+
+⸻
+
+Status
+
+Current version: 0.2 — Phase 1B
+
+Project: PĀṆINI-LAB
+
+Primary goal: Counterfactual computational analysis of Pāṇinian rule dependencies

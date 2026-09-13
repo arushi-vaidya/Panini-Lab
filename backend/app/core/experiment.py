@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from .derivation import DerivationEngine
+from typing import List
 
+from .derivation import DerivationEngine
 from .models import (
-    ExperimentResult
+    ExperimentResult,
+    Rule,
 )
 
 
@@ -11,126 +13,121 @@ class CounterfactualExperiment:
 
     def __init__(
         self,
-        engine: DerivationEngine
+        derivation_engine: DerivationEngine | None = None,
     ):
-
-        self.engine = engine
-
-    # ========================================================
-    # RUN EXPERIMENT
-    # ========================================================
+        self.derivation_engine = (
+            derivation_engine
+            if derivation_engine
+            else DerivationEngine()
+        )
 
     def run(
         self,
-        input_form: str,
-        *,
-        disabled_rules: list[str] | None = None,
-        initial_features: dict | None = None,
+        input_surface: str,
+        rules: List[Rule],
+        disabled_rules: List[str],
     ) -> ExperimentResult:
 
-        disabled_rules = (
-            disabled_rules
-            or []
+        baseline = self.derivation_engine.derive(
+            input_surface=input_surface,
+            rules=rules,
+            disabled_rules=[],
         )
-
-        # ----------------------------------------------------
-        # ORIGINAL
-        # ----------------------------------------------------
-
-        self.engine.registry.reset_rules()
-
-        original = self.engine.derive(
-            input_form,
-            initial_features=initial_features
-        )
-
-        # ----------------------------------------------------
-        # COUNTERFACTUAL
-        # ----------------------------------------------------
-
-        self.engine.registry.reset_rules()
-
-        for rule_id in disabled_rules:
-
-            self.engine.registry.disable_rule(
-                rule_id
-            )
 
         counterfactual = (
-            self.engine.derive(
-                input_form,
-                initial_features=initial_features
+            self.derivation_engine.derive(
+                input_surface=input_surface,
+                rules=rules,
+                disabled_rules=disabled_rules,
             )
         )
-
-        # ----------------------------------------------------
-        # COMPARE STEPS
-        # ----------------------------------------------------
 
         changed_steps = []
 
         max_steps = max(
-            len(original.steps),
-            len(counterfactual.steps)
+            len(baseline.records),
+            len(counterfactual.records),
         )
 
-        for index in range(
-            max_steps
-        ):
+        for index in range(max_steps):
 
-            original_form = (
-                original.steps[index].after_form
-                if index < len(original.steps)
+            baseline_record = (
+                baseline.records[index]
+                if index < len(baseline.records)
                 else None
             )
 
-            counterfactual_form = (
-                counterfactual.steps[index].after_form
-                if index < len(counterfactual.steps)
+            counter_record = (
+                counterfactual.records[index]
+                if index < len(counterfactual.records)
                 else None
             )
 
-            if original_form != counterfactual_form:
+            baseline_surface = (
+                baseline_record.after_surface
+                if baseline_record
+                else None
+            )
+
+            counter_surface = (
+                counter_record.after_surface
+                if counter_record
+                else None
+            )
+
+            if baseline_surface != counter_surface:
 
                 changed_steps.append(
-                    index + 1
+                    {
+                        "step": index + 1,
+                        "baseline_rule": (
+                            baseline_record.rule_id
+                            if baseline_record
+                            else None
+                        ),
+                        "counterfactual_rule": (
+                            counter_record.rule_id
+                            if counter_record
+                            else None
+                        ),
+                        "baseline_surface": baseline_surface,
+                        "counterfactual_surface": counter_surface,
+                    }
                 )
 
-        # ----------------------------------------------------
-        # RESET
-        # ----------------------------------------------------
+        output_changed = (
+            baseline.output_surface
+            != counterfactual.output_surface
+        )
 
-        self.engine.registry.reset_rules()
-
-        # ----------------------------------------------------
-        # RETURN
-        # ----------------------------------------------------
+        impact_summary = {
+            "disabled_rule_count": len(
+                disabled_rules
+            ),
+            "baseline_steps": len(
+                baseline.records
+            ),
+            "counterfactual_steps": len(
+                counterfactual.records
+            ),
+            "changed_steps": len(
+                changed_steps
+            ),
+            "baseline_output": (
+                baseline.output_surface
+            ),
+            "counterfactual_output": (
+                counterfactual.output_surface
+            ),
+        }
 
         return ExperimentResult(
-            input_form=input_form,
-
-            original_output=(
-                original.output_form
-            ),
-
-            counterfactual_output=(
-                counterfactual.output_form
-            ),
-
+            baseline=baseline,
+            counterfactual=counterfactual,
             disabled_rules=disabled_rules,
-
-            output_changed=(
-                original.output_form
-                != counterfactual.output_form
-            ),
-
-            original_steps=(
-                original.steps
-            ),
-
-            counterfactual_steps=(
-                counterfactual.steps
-            ),
-
+            output_changed=output_changed,
+            baseline_output=baseline.output_surface,
+            counterfactual_output=counterfactual.output_surface,
             changed_steps=changed_steps,
+            impact_summary=impact_summary,
         )
