@@ -1,33 +1,199 @@
 {
   "rules": [
     {
-      "rule_id": "R001",
-      "sutra": "6.1.87",
-      "name": "Illustrative vowel transformation",
-      "description": "Illustrative computational rule used to test the Phase 1B state-transition architecture. This rule is not a complete formal encoding of the referenced sutra.",
+      "rule_id": "P60177",
+      "sutra": "6.1.77",
+      "name": "iko yaṇaci",
+      "sutra_devanagari": "इको यणचि",
+      "description": "An ik vowel is replaced by its corresponding yaṇ sound when followed by a vowel in saṃhitā.",
+      "phenomenon": "vowel_sandhi",
       "priority": 100,
-      "status": "illustrative",
+      "status": "validated_subset",
       "enabled": true,
       "repeatable": false,
 
       "conditions": [
         {
-          "condition_type": "pattern",
-          "pattern": "अइ",
-          "negate": false,
+          "condition_type": "context_pair",
+          "left_class": "ik",
+          "right_class": "ac",
           "metadata": {
-            "matching_mode": "exact_substring"
+            "requires_adjacent_tokens": true
           }
         }
       ],
 
       "operations": [
         {
-          "operation_type": "substitute",
-          "target_pattern": "अइ",
-          "replacement": "ए",
+          "operation_type": "contextual_substitute",
+          "mapping": {
+            "इ": "य",
+            "ई": "य",
+            "उ": "व",
+            "ऊ": "व",
+            "ऋ": "र",
+            "ॠ": "र",
+            "ऌ": "ल"
+          },
+          "target": "left_token"
+        }
+      ],
+
+      "scope": {
+        "domains": [
+          "phonology",
+          "sandhi",
+          "vowel_sandhi"
+        ],
+        "categories": [
+          "ac"
+        ],
+        "required_features": {},
+        "excluded_features": {}
+      },
+
+      "dependencies": [
+        "P60101"
+      ],
+
+      "blocking_type": "blocked_by",
+      "blocks": [],
+      "blocked_by": [
+        "P60101"
+      ],
+
+      "examples": [
+        {
+          "input": "दधि + अत्र",
+          "expected_output": "दध्यत्र"
+        },
+        {
+          "input": "मधु + अत्र",
+          "expected_output": "मध्वत्र"
+        }
+      ],
+
+      "metadata": {
+        "source_status": "verified_sutra_subset",
+        "phase": "2",
+        "domain": "ac_sandhi"
+      }
+    },
+
+    {
+      "rule_id": "P60178",
+      "sutra": "6.1.78",
+      "name": "eco'yavāyāvaḥ",
+      "sutra_devanagari": "एचोऽयवायावः",
+      "description": "The vowels e, o, ai and au are replaced respectively by ay, av, āy and āv when followed by a vowel.",
+      "phenomenon": "vowel_sandhi",
+      "priority": 95,
+      "status": "validated_subset",
+      "enabled": true,
+      "repeatable": false,
+
+      "conditions": [
+        {
+          "condition_type": "context_pair",
+          "left_class": "ec",
+          "right_class": "ac",
           "metadata": {
-            "operation_scope": "first_match"
+            "requires_adjacent_tokens": true
+          }
+        }
+      ],
+
+      "operations": [
+        {
+          "operation_type": "contextual_substitute",
+          "mapping": {
+            "ए": "अय",
+            "ओ": "अव",
+            "ऐ": "आय",
+            "औ": "आव"
+          },
+          "target": "left_token"
+        }
+      ],
+
+      "scope": {
+        "domains": [
+          "phonology",
+          "sandhi",
+          "vowel_sandhi"
+        ],
+        "categories": [
+          "ac"
+        ],
+        "required_features": {},
+        "excluded_features": {}
+      },
+
+      "dependencies": [],
+
+      "blocking_type": "none",
+      "blocks": [],
+      "blocked_by": [],
+
+      "examples": [
+        {
+          "input": "हरे + इह",
+          "expected_output": "हरयिह"
+        }
+      ],
+
+      "metadata": {
+        "source_status": "verified_sutra_subset",
+        "phase": "2",
+        "domain": "ac_sandhi"
+      }
+    },
+
+    {
+      "rule_id": "P60187",
+      "sutra": "6.1.87",
+      "name": "ādguṇaḥ",
+      "sutra_devanagari": "आद्गुणः",
+      "description": "An a/ā followed by an appropriate vowel undergoes guṇa substitution, producing a single guṇa outcome.",
+      "phenomenon": "vowel_sandhi",
+      "priority": 80,
+      "status": "validated_subset",
+      "enabled": true,
+      "repeatable": false,
+
+      "conditions": [
+        {
+          "condition_type": "context_pair",
+          "left_class": "a_vowel",
+          "right_class": "ik",
+          "metadata": {
+            "requires_adjacent_tokens": true
+          }
+        }
+      ],
+
+      "operations": [
+        {
+          "operation_type": "contextual_pair_substitute",
+          "mapping": {
+            "अ+इ": "ए",
+            "अ+ई": "ए",
+            "आ+इ": "ए",
+            "आ+ई": "ए",
+
+            "अ+उ": "ओ",
+            "अ+ऊ": "ओ",
+            "आ+उ": "ओ",
+            "आ+ऊ": "ओ",
+
+            "अ+ऋ": "अर्",
+            "आ+ऋ": "अर्",
+
+            "अ+ॠ": "अर्",
+            "आ+ॠ": "अर्",
+
+            "अ+ऌ": "अल्",
+            "आ+ऌ": "अल्"
           }
         }
       ],
@@ -35,245 +201,210 @@
       "scope": {
         "domains": [
           "phonology",
-          "vowel_transformation"
-        ],
-        "categories": [],
-        "required_features": {},
-        "excluded_features": {}
-      },
-
-      "dependencies": [],
-
-      "blocking_type": "none",
-      "blocks": [],
-      "blocked_by": [],
-
-      "metadata": {
-        "phase": "1B",
-        "validation_status": "illustrative_only",
-        "repeat_policy": "once_per_derivation"
-      }
-    },
-
-    {
-      "rule_id": "R002",
-      "sutra": "TEST.FEATURE.01",
-      "name": "Present-tense feature propagation",
-      "description": "Synthetic rule used to validate feature-based conditions and feature-state transitions.",
-      "priority": 90,
-      "status": "synthetic",
-      "enabled": true,
-      "repeatable": false,
-
-      "conditions": [
-        {
-          "condition_type": "feature",
-          "feature_key": "category",
-          "feature_value": "verb",
-          "negate": false,
-          "metadata": {
-            "matching_mode": "exact"
-          }
-        }
-      ],
-
-      "operations": [
-        {
-          "operation_type": "feature_update",
-          "feature_key": "tense",
-          "feature_value": "present",
-          "metadata": {
-            "update_scope": "all_matching_tokens"
-          }
-        }
-      ],
-
-      "scope": {
-        "domains": [
-          "morphology",
-          "features"
+          "sandhi",
+          "vowel_sandhi"
         ],
         "categories": [
-          "verb"
+          "a_vowel"
         ],
         "required_features": {},
         "excluded_features": {}
       },
 
-      "dependencies": [],
+      "dependencies": [
+        "P60188",
+        "P60101"
+      ],
 
-      "blocking_type": "none",
+      "blocking_type": "blocked_by",
       "blocks": [],
-      "blocked_by": [],
+      "blocked_by": [
+        "P60188",
+        "P60101"
+      ],
+
+      "examples": [
+        {
+          "input": "देव + इन्द्र",
+          "expected_output": "देवेन्द्र"
+        },
+        {
+          "input": "राम + उपासना",
+          "expected_output": "रामोपासना"
+        }
+      ],
 
       "metadata": {
-        "phase": "1B",
-        "validation_status": "synthetic_test_rule",
-        "repeat_policy": "once_per_derivation"
+        "source_status": "verified_sutra_subset",
+        "phase": "2",
+        "domain": "ac_sandhi"
       }
     },
 
     {
-      "rule_id": "R003",
-      "sutra": "TEST.INSERT.01",
-      "name": "Synthetic insertion rule",
-      "description": "Synthetic rule used to validate positional insertion and token identity preservation.",
-      "priority": 80,
-      "status": "synthetic",
+      "rule_id": "P60188",
+      "sutra": "6.1.88",
+      "name": "vṛddhireci",
+      "sutra_devanagari": "वृद्धिरेचि",
+      "description": "An a/ā followed by an ec vowel undergoes vṛddhi substitution.",
+      "phenomenon": "vowel_sandhi",
+      "priority": 90,
+      "status": "validated_subset",
       "enabled": true,
       "repeatable": false,
 
       "conditions": [
         {
-          "condition_type": "pattern",
-          "pattern": "ग",
-          "negate": false,
+          "condition_type": "context_pair",
+          "left_class": "a_vowel",
+          "right_class": "ec",
           "metadata": {
-            "matching_mode": "exact_substring"
+            "requires_adjacent_tokens": true
           }
         }
       ],
 
       "operations": [
         {
-          "operation_type": "insert",
-          "replacement": "अ",
-          "position": 1,
-          "metadata": {
-            "position_mode": "absolute_index"
+          "operation_type": "contextual_pair_substitute",
+          "mapping": {
+            "अ+ए": "ऐ",
+            "आ+ए": "ऐ",
+
+            "अ+ओ": "औ",
+            "आ+ओ": "औ",
+
+            "अ+ऐ": "ऐ",
+            "आ+ऐ": "ऐ",
+
+            "अ+औ": "औ",
+            "आ+औ": "औ"
           }
         }
       ],
 
       "scope": {
         "domains": [
-          "morphology",
-          "sequence_transformation"
+          "phonology",
+          "sandhi",
+          "vowel_sandhi"
         ],
-        "categories": [],
+        "categories": [
+          "a_vowel"
+        ],
         "required_features": {},
         "excluded_features": {}
       },
 
       "dependencies": [],
 
-      "blocking_type": "none",
-      "blocks": [],
+      "blocking_type": "blocks",
+      "blocks": [
+        "P60187"
+      ],
       "blocked_by": [],
 
+      "examples": [
+        {
+          "input": "देव + एषः",
+          "expected_output": "देवैषः"
+        }
+      ],
+
       "metadata": {
-        "phase": "1B",
-        "validation_status": "synthetic_test_rule",
-        "repeat_policy": "once_per_derivation"
+        "source_status": "verified_sutra_subset",
+        "phase": "2",
+        "domain": "ac_sandhi"
       }
     },
 
     {
-      "rule_id": "R004",
-      "sutra": "TEST.DELETE.01",
-      "name": "Synthetic deletion rule",
-      "description": "Synthetic rule used to validate token deletion through inactive-state marking.",
-      "priority": 70,
-      "status": "synthetic",
+      "rule_id": "P601101",
+      "sutra": "6.1.101",
+      "name": "akaḥ savarṇe dīrghaḥ",
+      "sutra_devanagari": "अकः सवर्णे दीर्घः",
+      "description": "An aK vowel followed by a homogeneous vowel is replaced by the corresponding long vowel.",
+      "phenomenon": "vowel_sandhi",
+      "priority": 110,
+      "status": "validated_subset",
       "enabled": true,
       "repeatable": false,
 
       "conditions": [
         {
-          "condition_type": "pattern",
-          "pattern": "X",
-          "negate": false,
+          "condition_type": "context_pair",
+          "left_class": "aK",
+          "right_class": "savarṇa_vowel",
           "metadata": {
-            "matching_mode": "exact_substring"
+            "requires_adjacent_tokens": true
           }
         }
       ],
 
       "operations": [
         {
-          "operation_type": "delete",
-          "target_pattern": "X",
-          "metadata": {
-            "deletion_mode": "deactivate_token"
+          "operation_type": "contextual_pair_substitute",
+          "mapping": {
+            "अ+अ": "आ",
+            "अ+आ": "आ",
+            "आ+अ": "आ",
+            "आ+आ": "आ",
+
+            "इ+इ": "ई",
+            "इ+ई": "ई",
+            "ई+इ": "ई",
+            "ई+ई": "ई",
+
+            "उ+उ": "ऊ",
+            "उ+ऊ": "ऊ",
+            "ऊ+उ": "ऊ",
+            "ऊ+ऊ": "ऊ",
+
+            "ऋ+ऋ": "ॠ",
+            "ऋ+ॠ": "ॠ",
+            "ॠ+ऋ": "ॠ",
+            "ॠ+ॠ": "ॠ"
           }
         }
       ],
 
       "scope": {
         "domains": [
-          "sequence_transformation",
-          "deletion"
+          "phonology",
+          "sandhi",
+          "vowel_sandhi"
         ],
-        "categories": [],
+        "categories": [
+          "aK"
+        ],
         "required_features": {},
         "excluded_features": {}
       },
 
       "dependencies": [],
 
-      "blocking_type": "none",
-      "blocks": [],
+      "blocking_type": "blocks",
+      "blocks": [
+        "P60177",
+        "P60187"
+      ],
       "blocked_by": [],
 
-      "metadata": {
-        "phase": "1B",
-        "validation_status": "synthetic_test_rule",
-        "repeat_policy": "once_per_derivation"
-      }
-    },
-
-    {
-      "rule_id": "R005",
-      "sutra": "TEST.MARKER.01",
-      "name": "Synthetic marker assignment",
-      "description": "Synthetic rule used to validate grammatical marker creation and token-level provenance.",
-      "priority": 60,
-      "status": "synthetic",
-      "enabled": true,
-      "repeatable": false,
-
-      "conditions": [
+      "examples": [
         {
-          "condition_type": "pattern",
-          "pattern": "ग",
-          "negate": false,
-          "metadata": {
-            "matching_mode": "exact_substring"
-          }
+          "input": "राम + आलयः",
+          "expected_output": "रामालयः"
+        },
+        {
+          "input": "इति + इति",
+          "expected_output": "इतीति"
         }
       ],
 
-      "operations": [
-        {
-          "operation_type": "marker_add",
-          "target_pattern": "ग",
-          "marker": "processed",
-          "metadata": {
-            "marker_scope": "matching_tokens"
-          }
-        }
-      ],
-
-      "scope": {
-        "domains": [
-          "morphology",
-          "markers"
-        ],
-        "categories": [],
-        "required_features": {},
-        "excluded_features": {}
-      },
-
-      "dependencies": [],
-
-      "blocking_type": "none",
-      "blocks": [],
-      "blocked_by": [],
-
       "metadata": {
-        "phase": "1B",
-        "validation_status": "synthetic_test_rule",
-        "repeat_policy": "once_per_derivation"
+        "source_status": "verified_sutra_subset",
+        "phase": "2",
+        "domain": "ac_sandhi"
       }
     }
   ]

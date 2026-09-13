@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import re
-from typing import List, Tuple
+from copy import deepcopy
+from typing import Dict, List, Optional, Tuple
 
 from .models import (
     ConditionType,
@@ -10,11 +10,65 @@ from .models import (
     Rule,
     RuleCondition,
     RuleOperation,
-    StateToken,
 )
 
 
+VOWEL_CLASSES: Dict[str, str] = {
+    "अ": "a_vowel",
+    "आ": "a_vowel",
+
+    "इ": "ik",
+    "ई": "ik",
+    "उ": "ik",
+    "ऊ": "ik",
+    "ऋ": "ik",
+    "ॠ": "ik",
+    "ऌ": "ik",
+
+    "ए": "ec",
+    "ओ": "ec",
+    "ऐ": "ec",
+    "औ": "ec",
+
+    "अ": "aK",
+    "आ": "aK",
+    "इ": "aK",
+    "ई": "aK",
+    "उ": "aK",
+    "ऊ": "aK",
+    "ऋ": "aK",
+    "ॠ": "aK",
+    "ऌ": "aK",
+
+    "ए": "ac",
+    "ओ": "ac",
+    "ऐ": "ac",
+    "औ": "ac",
+
+    "अ": "savarṇa_vowel",
+    "आ": "savarṇa_vowel",
+    "इ": "savarṇa_vowel",
+    "ई": "savarṇa_vowel",
+    "उ": "savarṇa_vowel",
+    "ऊ": "savarṇa_vowel",
+    "ऋ": "savarṇa_vowel",
+    "ॠ": "savarṇa_vowel",
+    "ऌ": "savarṇa_vowel",
+    "ए": "savarṇa_vowel",
+    "ओ": "savarṇa_vowel",
+    "ऐ": "savarṇa_vowel",
+    "औ": "savarṇa_vowel",
+}
+
+
 class RuleEngine:
+
+    def __init__(self):
+        self.last_match: Optional[Tuple[int, int]] = None
+
+    # ---------------------------------------------------------
+    # Public API
+    # ---------------------------------------------------------
 
     def evaluate(
         self,
@@ -25,542 +79,492 @@ class RuleEngine:
         if not rule.enabled:
             return False
 
-        if not self._scope_matches(rule, state):
-            return False
-
         for condition in rule.conditions:
-
-            result = self.evaluate_condition(
-                condition,
-                state,
-            )
-
-            if condition.negate:
-                result = not result
-
-            if not result:
+            if not self._evaluate_condition(condition, state):
                 return False
 
         return True
-
-    def evaluate_condition(
-        self,
-        condition: RuleCondition,
-        state: GrammarState,
-    ) -> bool:
-
-        active_tokens = state.get_active_tokens()
-
-        if condition.condition_type == ConditionType.PATTERN:
-
-            if not condition.pattern:
-                return False
-
-            return self._pattern_exists(
-                active_tokens,
-                condition.pattern,
-            )
-
-        if condition.condition_type == ConditionType.FEATURE:
-
-            if not condition.feature_key:
-                return False
-
-            return any(
-                token.has_feature(
-                    condition.feature_key,
-                    condition.feature_value,
-                )
-                for token in active_tokens
-            )
-
-        if condition.condition_type == ConditionType.MARKER:
-
-            if not condition.marker:
-                return False
-
-            return any(
-                condition.marker in token.markers
-                for token in active_tokens
-            )
-
-        if condition.condition_type == ConditionType.CONTEXT:
-
-            return self._context_matches(
-                active_tokens,
-                condition,
-            )
-
-        if condition.condition_type == ConditionType.CUSTOM:
-            return False
-
-        return False
 
     def apply(
         self,
         rule: Rule,
         state: GrammarState,
-    ) -> Tuple[GrammarState, bool, str]:
+    ) -> GrammarState:
 
-        if not self.evaluate(rule, state):
-            return state, False, "Conditions not satisfied."
-
-        new_state = state.clone()
-
-        changed = False
-        explanations = []
+        new_state = deepcopy(state)
 
         for operation in rule.operations:
-
-            operation_changed, explanation = self.apply_operation(
+            new_state = self._apply_operation(
                 operation,
                 new_state,
             )
 
-            if operation_changed:
-                changed = True
-                explanations.append(explanation)
+        new_state.step += 1
 
-        if changed:
-            new_state.step += 1
-            new_state.history_id = (
-                f"{state.history_id}->{rule.rule_id}"
-            )
+        return new_state
 
-            new_state.refresh_positions()
+    # ---------------------------------------------------------
+    # Conditions
+    # ---------------------------------------------------------
 
-        return (
-            new_state,
-            changed,
-            " ".join(explanations),
-        )
-
-    def apply_operation(
+    def _evaluate_condition(
         self,
-        operation: RuleOperation,
-        state: GrammarState,
-    ) -> Tuple[bool, str]:
-
-        if operation.operation_type == OperationType.SUBSTITUTE:
-
-            return self._substitute(
-                operation,
-                state,
-            )
-
-        if operation.operation_type == OperationType.INSERT:
-
-            return self._insert(
-                operation,
-                state,
-            )
-
-        if operation.operation_type == OperationType.DELETE:
-
-            return self._delete(
-                operation,
-                state,
-            )
-
-        if operation.operation_type == OperationType.FEATURE_UPDATE:
-
-            return self._feature_update(
-                operation,
-                state,
-            )
-
-        if operation.operation_type == OperationType.MARKER_ADD:
-
-            return self._marker_add(
-                operation,
-                state,
-            )
-
-        if operation.operation_type == OperationType.MARKER_REMOVE:
-
-            return self._marker_remove(
-                operation,
-                state,
-            )
-
-        return False, "Custom operation not implemented."
-
-    def _scope_matches(
-        self,
-        rule: Rule,
+        condition: RuleCondition,
         state: GrammarState,
     ) -> bool:
 
-        scope = rule.scope
+        if condition.condition_type == ConditionType.PATTERN:
+            result = self._has_pattern(
+                state,
+                condition.pattern or "",
+            )
 
-        if scope.required_features:
+        elif condition.condition_type == ConditionType.FEATURE:
+            result = self._has_feature(
+                state,
+                condition.feature_key,
+                condition.feature_value,
+            )
 
-            for key, value in scope.required_features.items():
+        elif condition.condition_type == ConditionType.MARKER:
+            result = self._has_marker(
+                state,
+                condition.marker,
+            )
 
-                if state.features.get(key) != value:
-                    return False
+        elif condition.condition_type == ConditionType.CONTEXT_PAIR:
+            result = self._has_context_pair(
+                state,
+                condition.left_class,
+                condition.right_class,
+            )
 
-        if scope.excluded_features:
+        else:
+            result = False
 
-            for key, value in scope.excluded_features.items():
+        return not result if condition.negate else result
 
-                if state.features.get(key) == value:
-                    return False
-
-        if scope.categories:
-
-            categories = {
-                token.features.get("category")
-                for token in state.get_active_tokens()
-            }
-
-            if not categories.intersection(scope.categories):
-                return False
-
-        return True
-
-    def _pattern_exists(
+    def _has_pattern(
         self,
-        tokens: List[StateToken],
+        state: GrammarState,
         pattern: str,
     ) -> bool:
 
-        surface = "".join(
-            token.surface
-            for token in tokens
-        )
+        return pattern in state.surface
 
-        if pattern.startswith("regex:"):
-
-            regex = pattern[len("regex:"):]
-
-            return re.search(
-                regex,
-                surface,
-            ) is not None
-
-        return pattern in surface
-
-    def _context_matches(
+    def _has_feature(
         self,
-        tokens: List[StateToken],
-        condition: RuleCondition,
+        state: GrammarState,
+        key: Optional[str],
+        value,
     ) -> bool:
 
-        surface = "".join(
-            token.surface
-            for token in tokens
+        if key is None:
+            return False
+
+        return any(
+            token.active
+            and token.features.get(key) == value
+            for token in state.tokens
         )
 
-        if condition.pattern:
+    def _has_marker(
+        self,
+        state: GrammarState,
+        marker: Optional[str],
+    ) -> bool:
 
-            matches = list(
-                re.finditer(
-                    condition.pattern,
-                    surface,
-                )
-            )
-
-            if not matches:
-                return False
-
-            for match in matches:
-
-                left = surface[:match.start()]
-                right = surface[match.end():]
-
-                left_ok = True
-                right_ok = True
-
-                if condition.left_pattern:
-                    left_ok = re.search(
-                        condition.left_pattern + "$",
-                        left,
-                    ) is not None
-
-                if condition.right_pattern:
-                    right_ok = re.search(
-                        "^" + condition.right_pattern,
-                        right,
-                    ) is not None
-
-                if left_ok and right_ok:
-                    return True
-
+        if marker is None:
             return False
+
+        return any(
+            token.active
+            and marker in token.markers
+            for token in state.tokens
+        )
+
+    def _has_context_pair(
+        self,
+        state: GrammarState,
+        left_class: Optional[str],
+        right_class: Optional[str],
+    ) -> bool:
+
+        active_tokens = [
+            token
+            for token in state.tokens
+            if token.active
+        ]
+
+        for i in range(len(active_tokens) - 1):
+
+            left = active_tokens[i]
+            right = active_tokens[i + 1]
+
+            if (
+                self._belongs_to_class(
+                    left.surface,
+                    left_class,
+                )
+                and
+                self._belongs_to_class(
+                    right.surface,
+                    right_class,
+                )
+            ):
+                return True
 
         return False
 
-    def _substitute(
+    # ---------------------------------------------------------
+    # Class membership
+    # ---------------------------------------------------------
+
+    def _belongs_to_class(
+        self,
+        symbol: str,
+        class_name: Optional[str],
+    ) -> bool:
+
+        if class_name is None:
+            return False
+
+        if class_name == "ik":
+            return symbol in {
+                "इ", "ई",
+                "उ", "ऊ",
+                "ऋ", "ॠ",
+                "ऌ",
+            }
+
+        if class_name == "ec":
+            return symbol in {
+                "ए", "ओ", "ऐ", "औ"
+            }
+
+        if class_name == "ac":
+            return symbol in {
+                "अ", "आ",
+                "इ", "ई",
+                "उ", "ऊ",
+                "ऋ", "ॠ",
+                "ऌ",
+                "ए", "ओ",
+                "ऐ", "औ",
+            }
+
+        if class_name == "a_vowel":
+            return symbol in {
+                "अ",
+                "आ",
+            }
+
+        if class_name == "aK":
+            return symbol in {
+                "अ", "आ",
+                "इ", "ई",
+                "उ", "ऊ",
+                "ऋ", "ॠ",
+                "ऌ",
+            }
+
+        if class_name == "savarṇa_vowel":
+            return symbol in {
+                "अ", "आ",
+                "इ", "ई",
+                "उ", "ऊ",
+                "ऋ", "ॠ",
+                "ऌ",
+            }
+
+        return False
+
+    # ---------------------------------------------------------
+    # Operations
+    # ---------------------------------------------------------
+
+    def _apply_operation(
         self,
         operation: RuleOperation,
         state: GrammarState,
-    ) -> Tuple[bool, str]:
+    ) -> GrammarState:
 
-        if (
-            not operation.target_pattern
-            or operation.replacement is None
-        ):
-            return False, "Invalid substitution operation."
+        if operation.operation_type == OperationType.SUBSTITUTE:
+            return self._substitute(
+                state,
+                operation.target_pattern or "",
+                operation.replacement or "",
+            )
 
-        changed = False
+        if operation.operation_type == OperationType.CONTEXTUAL_SUBSTITUTE:
+            return self._contextual_substitute(
+                state,
+                operation.mapping,
+            )
 
-        target = operation.target_pattern
+        if operation.operation_type == OperationType.CONTEXTUAL_PAIR_SUBSTITUTE:
+            return self._contextual_pair_substitute(
+                state,
+                operation.mapping,
+            )
+
+        if operation.operation_type == OperationType.INSERT:
+            return self._insert(
+                state,
+                operation.replacement or "",
+                operation.position,
+            )
+
+        if operation.operation_type == OperationType.DELETE:
+            return self._delete(
+                state,
+                operation.target_pattern or "",
+            )
+
+        if operation.operation_type == OperationType.FEATURE_UPDATE:
+            return self._feature_update(
+                state,
+                operation.feature_key,
+                operation.feature_value,
+            )
+
+        if operation.operation_type == OperationType.MARKER_ADD:
+            return self._marker_add(
+                state,
+                operation.target_pattern,
+                operation.marker,
+            )
+
+        if operation.operation_type == OperationType.MARKER_REMOVE:
+            return self._marker_remove(
+                state,
+                operation.target_pattern,
+                operation.marker,
+            )
+
+        raise ValueError(
+            f"Unsupported operation: {operation.operation_type}"
+        )
+
+    # ---------------------------------------------------------
+    # Contextual substitution
+    # ---------------------------------------------------------
+
+    def _contextual_substitute(
+        self,
+        state: GrammarState,
+        mapping: Dict[str, str],
+    ) -> GrammarState:
+
+        tokens = [
+            token
+            for token in state.tokens
+            if token.active
+        ]
+
+        for i in range(len(tokens) - 1):
+
+            left = tokens[i]
+            right = tokens[i + 1]
+
+            replacement = mapping.get(
+                left.surface
+            )
+
+            if replacement is None:
+                continue
+
+            if not self._is_vowel(right.surface):
+                continue
+
+            left.surface = replacement
+
+            return state
+
+        return state
+
+    def _contextual_pair_substitute(
+        self,
+        state: GrammarState,
+        mapping: Dict[str, str],
+    ) -> GrammarState:
+
+        tokens = [
+            token
+            for token in state.tokens
+            if token.active
+        ]
+
+        for i in range(len(tokens) - 1):
+
+            left = tokens[i]
+            right = tokens[i + 1]
+
+            key = f"{left.surface}+{right.surface}"
+
+            replacement = mapping.get(key)
+
+            if replacement is None:
+                continue
+
+            left.surface = replacement
+            right.active = False
+
+            return state
+
+        return state
+
+    # ---------------------------------------------------------
+    # Basic operations
+    # ---------------------------------------------------------
+
+    def _substitute(
+        self,
+        state: GrammarState,
+        target: str,
+        replacement: str,
+    ) -> GrammarState:
 
         for token in state.tokens:
 
-            if not token.active:
-                continue
+            if token.active and token.surface == target:
+                token.surface = replacement
+                return state
 
-            if token.surface == target:
-
-                old = token.surface
-
-                token.surface = operation.replacement
-
-                changed = True
-
-                return (
-                    True,
-                    f"Substituted '{old}' with "
-                    f"'{operation.replacement}'.",
-                )
-
-        surface = state.surface
-
-        if target in surface:
-
-            new_surface = surface.replace(
-                target,
-                operation.replacement,
-                1,
-            )
-
-            self._replace_surface(
-                state,
-                new_surface,
-            )
-
-            changed = True
-
-            return (
-                True,
-                f"Substituted pattern '{target}' "
-                f"with '{operation.replacement}'.",
-            )
-
-        return False, "Target pattern not found."
+        return state
 
     def _insert(
         self,
-        operation: RuleOperation,
         state: GrammarState,
-    ) -> Tuple[bool, str]:
+        value: str,
+        position: Optional[int],
+    ) -> GrammarState:
 
-        if operation.replacement is None:
-            return False, "Invalid insertion operation."
+        if position is None:
+            position = len(state.tokens)
 
-        position = (
-            operation.position
-            if operation.position is not None
-            else len(state.tokens)
-        )
+        from .models import StateToken
 
-        new_token = StateToken(
-            token_id=self._next_token_id(state),
-            surface=operation.replacement,
-            source="rule_insert",
+        token = StateToken(
+            token_id=f"generated_{state.step}",
+            surface=value,
+            source="rule",
             position=position,
+            active=True,
         )
 
         state.tokens.insert(
             position,
-            new_token,
+            token,
         )
 
-        state.refresh_positions()
+        self._reindex(state)
 
-        return (
-            True,
-            f"Inserted '{operation.replacement}' "
-            f"at position {position}.",
-        )
+        return state
 
     def _delete(
         self,
-        operation: RuleOperation,
         state: GrammarState,
-    ) -> Tuple[bool, str]:
+        target: str,
+    ) -> GrammarState:
 
-        if not operation.target_pattern:
-            return False, "Invalid delete operation."
+        for token in state.tokens:
+
+            if token.active and token.surface == target:
+                token.active = False
+                return state
+
+        return state
+
+    def _feature_update(
+        self,
+        state: GrammarState,
+        key: Optional[str],
+        value,
+    ) -> GrammarState:
+
+        if key is None:
+            return state
+
+        for token in state.tokens:
+            if token.active:
+                token.features[key] = value
+
+        return state
+
+    def _marker_add(
+        self,
+        state: GrammarState,
+        target: Optional[str],
+        marker: Optional[str],
+    ) -> GrammarState:
+
+        if marker is None:
+            return state
 
         for token in state.tokens:
 
             if (
                 token.active
-                and token.surface == operation.target_pattern
-            ):
-
-                token.active = False
-
-                return (
-                    True,
-                    f"Deleted '{operation.target_pattern}'.",
+                and
+                (
+                    target is None
+                    or token.surface == target
                 )
-
-        return False, "Target token not found."
-
-    def _feature_update(
-        self,
-        operation: RuleOperation,
-        state: GrammarState,
-    ) -> Tuple[bool, str]:
-
-        if not operation.feature_key:
-            return False, "Feature key missing."
-
-        changed = False
-
-        for token in state.get_active_tokens():
-
-            if (
-                operation.target_pattern
-                and token.surface != operation.target_pattern
             ):
-                continue
+                if marker not in token.markers:
+                    token.markers.append(marker)
 
-            old_value = token.features.get(
-                operation.feature_key
-            )
-
-            if old_value != operation.feature_value:
-
-                token.features[
-                    operation.feature_key
-                ] = operation.feature_value
-
-                changed = True
-
-        if changed:
-
-            return (
-                True,
-                f"Updated feature "
-                f"'{operation.feature_key}' "
-                f"to '{operation.feature_value}'.",
-            )
-
-        return False, "Feature already has requested value."
-
-    def _marker_add(
-        self,
-        operation: RuleOperation,
-        state: GrammarState,
-    ) -> Tuple[bool, str]:
-
-        if not operation.marker:
-            return False, "Marker missing."
-
-        changed = False
-
-        for token in state.get_active_tokens():
-
-            if (
-                operation.target_pattern
-                and token.surface != operation.target_pattern
-            ):
-                continue
-
-            if operation.marker not in token.markers:
-
-                token.markers.append(
-                    operation.marker
-                )
-
-                changed = True
-
-        return (
-            changed,
-            (
-                f"Added marker '{operation.marker}'."
-                if changed
-                else "Marker already exists."
-            ),
-        )
+        return state
 
     def _marker_remove(
         self,
-        operation: RuleOperation,
         state: GrammarState,
-    ) -> Tuple[bool, str]:
+        target: Optional[str],
+        marker: Optional[str],
+    ) -> GrammarState:
 
-        if not operation.marker:
-            return False, "Marker missing."
-
-        changed = False
-
-        for token in state.get_active_tokens():
-
-            if (
-                operation.target_pattern
-                and token.surface != operation.target_pattern
-            ):
-                continue
-
-            if operation.marker in token.markers:
-
-                token.markers.remove(
-                    operation.marker
-                )
-
-                changed = True
-
-        return (
-            changed,
-            (
-                f"Removed marker '{operation.marker}'."
-                if changed
-                else "Marker not present."
-            ),
-        )
-
-    def _replace_surface(
-        self,
-        state: GrammarState,
-        new_surface: str,
-    ) -> None:
-
-        active_tokens = state.get_active_tokens()
-
-        if not active_tokens:
-            return
-
-        active_tokens[0].surface = new_surface
-
-        for token in active_tokens[1:]:
-            token.active = False
-
-        state.refresh_positions()
-
-    def _next_token_id(
-        self,
-        state: GrammarState,
-    ) -> str:
-
-        existing = []
+        if marker is None:
+            return state
 
         for token in state.tokens:
 
-            if token.token_id.startswith("t"):
+            if (
+                token.active
+                and
+                (
+                    target is None
+                    or token.surface == target
+                )
+            ):
+                if marker in token.markers:
+                    token.markers.remove(marker)
 
-                try:
-                    existing.append(
-                        int(token.token_id[1:])
-                    )
-                except ValueError:
-                    pass
+        return state
 
-        next_id = max(existing, default=0) + 1
+    # ---------------------------------------------------------
+    # Helpers
+    # ---------------------------------------------------------
 
-        return f"t{next_id}"
+    def _is_vowel(
+        self,
+        symbol: str,
+    ) -> bool:
+
+        return symbol in {
+            "अ", "आ",
+            "इ", "ई",
+            "उ", "ऊ",
+            "ऋ", "ॠ",
+            "ऌ",
+            "ए", "ओ",
+            "ऐ", "औ",
+        }
+
+    def _reindex(
+        self,
+        state: GrammarState,
+    ) -> None:
+
+        for index, token in enumerate(state.tokens):
+            token.position = index
