@@ -25,7 +25,7 @@ class RuleRegistry:
         rule: Rule,
     ) -> None:
 
-        rule.validate()
+        rule.model_dump()
 
         if rule.rule_id in self.rules:
             raise ValueError(
@@ -153,11 +153,11 @@ class RuleRegistry:
                         feature_value=raw_condition.get(
                             "feature_value"
                         ),
-                        left_pattern=raw_condition.get(
-                            "left_pattern"
+                        left_class=raw_condition.get(
+                            "left_class"
                         ),
-                        right_pattern=raw_condition.get(
-                            "right_pattern"
+                        right_class=raw_condition.get(
+                            "right_class"
                         ),
                         marker=raw_condition.get(
                             "marker"
@@ -192,6 +192,10 @@ class RuleRegistry:
                         ),
                         replacement=raw_operation.get(
                             "replacement"
+                        ),
+                        mapping=raw_operation.get(
+                            "mapping",
+                            {},
                         ),
                         position=raw_operation.get(
                             "position"
@@ -240,6 +244,7 @@ class RuleRegistry:
                 rule_id=raw_rule["rule_id"],
                 sutra=raw_rule["sutra"],
                 name=raw_rule["name"],
+                sutra_devanagari=raw_rule.get("sutra_devanagari"),
                 conditions=conditions,
                 operations=operations,
                 priority=raw_rule.get(
@@ -286,6 +291,10 @@ class RuleRegistry:
                 metadata=raw_rule.get(
                     "metadata",
                     {},
+                ),
+                examples=raw_rule.get(
+                    "examples",
+                    [],
                 ),
             )
 

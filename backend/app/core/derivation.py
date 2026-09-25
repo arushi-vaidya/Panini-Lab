@@ -353,10 +353,11 @@ class DerivationEngine:
         without necessarily changing the visible surface.
         """
 
-        return (
-            before.model_dump()
-            != after.model_dump()
-        )
+        before_snapshot = before.model_dump()
+        after_snapshot = after.model_dump()
+        before_snapshot.pop("step", None)
+        after_snapshot.pop("step", None)
+        return before_snapshot != after_snapshot
 
     # =========================================================
     # DERIVATION STEP CREATION

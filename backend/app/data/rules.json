@@ -53,13 +53,13 @@
       },
 
       "dependencies": [
-        "P60101"
+        "P601101"
       ],
 
       "blocking_type": "blocked_by",
       "blocks": [],
       "blocked_by": [
-        "P60101"
+        "P601101"
       ],
 
       "examples": [
@@ -213,14 +213,14 @@
 
       "dependencies": [
         "P60188",
-        "P60101"
+        "P601101"
       ],
 
       "blocking_type": "blocked_by",
       "blocks": [],
       "blocked_by": [
         "P60188",
-        "P60101"
+        "P601101"
       ],
 
       "examples": [
@@ -406,6 +406,138 @@
         "phase": "2",
         "domain": "ac_sandhi"
       }
+    },
+
+    {
+      "rule_id": "P60194",
+      "sutra": "6.1.94",
+      "name": "eṅi pararūpam",
+      "sutra_devanagari": "एङि पररूपम्",
+      "description": "Before an e or o vowel, the following vowel prevails in this sandhi environment.",
+      "phenomenon": "vowel_sandhi",
+      "priority": 96,
+      "status": "validated_subset",
+      "enabled": true,
+      "repeatable": false,
+      "conditions": [{"condition_type": "context_pair", "left_class": "a_vowel", "right_class": "ec"}],
+      "operations": [{"operation_type": "contextual_pair_substitute", "mapping": {"अ+ए": "ए", "आ+ए": "ए", "अ+ओ": "ओ", "आ+ओ": "ओ"}}],
+      "scope": {"domains": ["phonology", "sandhi", "vowel_sandhi"], "categories": ["ec"]},
+      "dependencies": [],
+      "blocking_type": "blocks",
+      "blocks": ["P60188"],
+      "blocked_by": [],
+      "examples": [{"input": "प्र + एति", "expected_output": "प्रेति"}],
+      "metadata": {"source_status": "verified_sutra_subset", "phase": "2", "domain": "ac_sandhi"}
+    },
+
+    {
+      "rule_id": "P80315",
+      "sutra": "8.3.15",
+      "name": "kharavasānayor visarjanīyaḥ",
+      "sutra_devanagari": "खरवसानयोर्विसर्जनीयः",
+      "description": "In the simplified word-boundary subset, final s before a khar sound becomes visarga.",
+      "phenomenon": "consonant_sandhi",
+      "priority": 70,
+      "status": "experimental_subset",
+      "enabled": true,
+      "repeatable": false,
+      "conditions": [{"condition_type": "context_pair", "left_class": "sibilant", "right_class": "khar"}],
+      "operations": [{"operation_type": "contextual_substitute", "mapping": {"स": "ः"}, "metadata": {"right_class": "khar"}}],
+      "scope": {"domains": ["phonology", "sandhi", "consonant_sandhi"], "categories": ["visarga"]},
+      "dependencies": [],
+      "blocking_type": "none",
+      "blocks": [],
+      "blocked_by": [],
+      "examples": [{"input": "नमस + ते", "expected_output": "नमःते"}],
+      "metadata": {"source_status": "simplified_context_subset", "phase": "2", "domain": "consonant_sandhi"}
+    },
+
+    {
+      "rule_id": "P8040",
+      "sutra": "8.4.40",
+      "name": "stoḥ ścunā ścuḥ",
+      "sutra_devanagari": "स्तोः श्चुना श्चुः",
+      "description": "Dental s and t-class sounds become palatal in the ścu environment.",
+      "phenomenon": "consonant_sandhi",
+      "priority": 65,
+      "status": "validated_subset",
+      "enabled": true,
+      "repeatable": false,
+      "conditions": [{"condition_type": "context_pair", "left_class": "dental_stop", "right_class": "ścu"}],
+      "operations": [{"operation_type": "contextual_substitute", "mapping": {"त": "च", "थ": "छ", "द": "ज", "ध": "झ", "न": "ञ", "स": "श"}, "metadata": {"right_class": "ścu"}}],
+      "scope": {"domains": ["phonology", "sandhi", "consonant_sandhi"], "categories": ["ścu"]},
+      "dependencies": [],
+      "blocking_type": "none",
+      "blocks": [],
+      "blocked_by": [],
+      "examples": [{"input": "त् + श", "expected_output": "च्श"}],
+      "metadata": {"source_status": "verified_sutra_subset", "phase": "2", "domain": "consonant_sandhi"}
+    },
+
+    {
+      "rule_id": "P8041",
+      "sutra": "8.4.41",
+      "name": "ṣṭunā ṣṭuḥ",
+      "sutra_devanagari": "ष्टुना ष्टुः",
+      "description": "Dental t-class sounds become retroflex in the ṣṭu environment.",
+      "phenomenon": "consonant_sandhi",
+      "priority": 64,
+      "status": "validated_subset",
+      "enabled": true,
+      "repeatable": false,
+      "conditions": [{"condition_type": "context_pair", "left_class": "dental_stop", "right_class": "ṣṭu"}],
+      "operations": [{"operation_type": "contextual_substitute", "mapping": {"त": "ट", "थ": "ठ", "द": "ड", "ध": "ढ", "न": "ण", "स": "ष"}, "metadata": {"right_class": "ṣṭu"}}],
+      "scope": {"domains": ["phonology", "sandhi", "consonant_sandhi"], "categories": ["ṣṭu"]},
+      "dependencies": [],
+      "blocking_type": "none",
+      "blocks": [],
+      "blocked_by": [],
+      "examples": [{"input": "त् + ष", "expected_output": "ट्ष"}],
+      "metadata": {"source_status": "verified_sutra_subset", "phase": "2", "domain": "consonant_sandhi"}
+    },
+
+    {
+      "rule_id": "P80455",
+      "sutra": "8.4.55",
+      "name": "khari ca",
+      "sutra_devanagari": "खरि च",
+      "description": "A voiced stop is devoiced before a khar sound in this simplified consonant environment.",
+      "phenomenon": "consonant_sandhi",
+      "priority": 63,
+      "status": "validated_subset",
+      "enabled": true,
+      "repeatable": false,
+      "conditions": [{"condition_type": "context_pair", "left_class": "voiced_stop", "right_class": "khar"}],
+      "operations": [{"operation_type": "contextual_substitute", "mapping": {"ग": "क", "घ": "ख", "ज": "च", "झ": "छ", "ड": "ट", "ढ": "ठ", "द": "त", "ध": "थ", "ब": "प", "भ": "फ"}, "metadata": {"right_class": "khar"}}],
+      "scope": {"domains": ["phonology", "sandhi", "consonant_sandhi"], "categories": ["khar"]},
+      "dependencies": [],
+      "blocking_type": "none",
+      "blocks": [],
+      "blocked_by": [],
+      "examples": [{"input": "तद् + त्वम्", "expected_output": "तत्त्"}],
+      "metadata": {"source_status": "simplified_context_subset", "phase": "2", "domain": "consonant_sandhi"}
+    },
+
+    {
+      "rule_id": "P823",
+      "sutra": "8.2.3",
+      "name": "mo 'nusvāraḥ",
+      "sutra_devanagari": "मोऽनुस्वारः",
+      "description": "The m sound becomes anusvāra before a consonant in this executable subset.",
+      "phenomenon": "consonant_sandhi",
+      "priority": 60,
+      "status": "experimental_subset",
+      "enabled": true,
+      "repeatable": false,
+      "conditions": [{"condition_type": "context_pair", "left_class": "m_sound", "right_class": "consonant"}],
+      "operations": [{"operation_type": "contextual_substitute", "mapping": {"म": "ं"}, "metadata": {"right_class": "consonant"}}],
+      "scope": {"domains": ["phonology", "sandhi", "consonant_sandhi"], "categories": ["anusvāra"]},
+      "dependencies": [],
+      "blocking_type": "none",
+      "blocks": [],
+      "blocked_by": [],
+      "examples": [{"input": "सम् + कर", "expected_output": "सङ्कर"}],
+      "metadata": {"source_status": "simplified_context_subset", "phase": "2", "domain": "consonant_sandhi"}
     }
   ]
 }

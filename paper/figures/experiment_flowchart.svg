@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="430" viewBox="0 0 900 430">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8f3627"/></marker>
+    <style>
+      .box{fill:#f8f0df;stroke:#30251e;stroke-width:2;rx:10}.accent{fill:#ead09c;stroke:#8f3627;stroke-width:2;rx:10}.text{font-family:Georgia,serif;font-size:18px;fill:#30251e;text-anchor:middle}.small{font-family:Arial,sans-serif;font-size:13px;fill:#766452;text-anchor:middle}.line{stroke:#8f3627;stroke-width:2.5;marker-end:url(#arrow);fill:none}
+    </style>
+  </defs>
+  <rect width="900" height="430" fill="#e8dcc5"/>
+  <text x="450" y="28" class="small" letter-spacing="2">COUNTERFACTUAL EXPERIMENT LOOP</text>
+  <rect x="40" y="90" width="160" height="78" class="box"/><text x="120" y="124" class="text">Input x</text><text x="120" y="147" class="small">same initial state</text>
+  <rect x="255" y="65" width="180" height="78" class="accent"/><text x="345" y="99" class="text">Baseline</text><text x="345" y="122" class="small">all enabled rules</text>
+  <rect x="255" y="205" width="180" height="78" class="accent"/><text x="345" y="239" class="text">Counterfactual</text><text x="345" y="262" class="small">remove or reorder</text>
+  <rect x="510" y="135" width="170" height="78" class="box"/><text x="595" y="169" class="text">Compare</text><text x="595" y="192" class="small">outputs and traces</text>
+  <rect x="735" y="135" width="125" height="78" class="box"/><text x="797" y="169" class="text">Measure</text><text x="797" y="192" class="small">impact score</text>
+  <path d="M200 120 H250" class="line"/><path d="M200 138 C220 138 220 244 250 244" class="line"/><path d="M435 104 C470 104 470 155 505 155" class="line"/><path d="M435 244 C470 244 470 195 505 195" class="line"/><path d="M680 174 H730" class="line"/>
+  <rect x="245" y="350" width="410" height="43" class="box"/><text x="450" y="377" class="small">changed steps | removed rules | newly fired rules | sensitivity</text>
+  <path d="M797 213 V330 H450 V345" class="line"/>
+</svg>

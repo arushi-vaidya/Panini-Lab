@@ -148,3 +148,14 @@ class GrammarState(BaseModel):
             for token in self.tokens
             if token.active
         )
+
+
+class ExperimentResult(BaseModel):
+    baseline: Any
+    counterfactual: Any
+    disabled_rules: List[str] = Field(default_factory=list)
+    output_changed: bool
+    baseline_output: str
+    counterfactual_output: str
+    changed_steps: List[Dict[str, Any]] = Field(default_factory=list)
+    impact_summary: Dict[str, Any] = Field(default_factory=dict)

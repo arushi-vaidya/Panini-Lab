@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8f3627"/></marker>
+    <style>
+      .box{fill:#f8f0df;stroke:#30251e;stroke-width:2;rx:10}.accent{fill:#ead09c;stroke:#8f3627;stroke-width:2;rx:10}.text{font-family:Georgia,serif;font-size:18px;fill:#30251e;text-anchor:middle}.small{font-family:Arial,sans-serif;font-size:13px;fill:#766452;text-anchor:middle}.line{stroke:#8f3627;stroke-width:2.5;marker-end:url(#arrow);fill:none}
+    </style>
+  </defs>
+  <rect width="900" height="520" fill="#e8dcc5"/>
+  <path d="M0 35 H900 M0 485 H900" stroke="#c9b697" stroke-width="2"/>
+  <text x="450" y="28" class="small" letter-spacing="2">PANINI-LAB EXECUTABLE RESEARCH PIPELINE</text>
+  <rect x="40" y="78" width="180" height="78" class="box"/><text x="130" y="112" class="text">Sanskrit input</text><text x="130" y="135" class="small">Devanagari sequence</text>
+  <rect x="270" y="78" width="180" height="78" class="box"/><text x="360" y="112" class="text">Tokenizer</text><text x="360" y="135" class="small">active grammar tokens</text>
+  <rect x="500" y="78" width="180" height="78" class="accent"/><text x="590" y="112" class="text">Rule registry</text><text x="590" y="135" class="small">11 executable rules</text>
+  <rect x="730" y="78" width="130" height="78" class="box"/><text x="795" y="112" class="text">Engine</text><text x="795" y="135" class="small">priority order</text>
+  <path d="M220 117 H265 M450 117 H495 M680 117 H725" class="line"/>
+  <rect x="135" y="245" width="190" height="82" class="box"/><text x="230" y="280" class="text">State transition</text><text x="230" y="303" class="small">evaluate + apply</text>
+  <rect x="355" y="245" width="190" height="82" class="accent"/><text x="450" y="280" class="text">Derivation trace</text><text x="450" y="303" class="small">before / after states</text>
+  <rect x="575" y="245" width="190" height="82" class="box"/><text x="670" y="280" class="text">Final output</text><text x="670" y="303" class="small">fixed point or limit</text>
+  <path d="M795 156 V205 H230 V240" class="line"/><path d="M325 286 H350 M545 286 H570" class="line"/>
+  <rect x="180" y="395" width="170" height="65" class="box"/><text x="265" y="425" class="text">Graphs</text><text x="265" y="446" class="small">declared + observed</text>
+  <rect x="365" y="395" width="170" height="65" class="accent"/><text x="450" y="425" class="text">Experiments</text><text x="450" y="446" class="small">remove / reorder</text>
+  <rect x="550" y="395" width="170" height="65" class="box"/><text x="635" y="425" class="text">Evaluation</text><text x="635" y="446" class="small">accuracy + impact</text>
+  <path d="M450 327 V370 H265 V390 M450 327 V390 M450 370 H635 V390" class="line"/>
+</svg>

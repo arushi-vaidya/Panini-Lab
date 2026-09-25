@@ -32,7 +32,7 @@ class DependencyGraph:
 
     def __init__(self, rules: List[Rule]):
         self.rules = rules
-        self.graph = nx.DiGraph()
+        self.graph = nx.MultiDiGraph()
 
         self._add_rule_nodes()
         self._add_dependency_edges()

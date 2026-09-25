@@ -1,0 +1,92 @@
+PĀṆINI-LAB UI DEMO
+==================
+
+1. START THE BACKEND
+
+Open Terminal 1:
+
+  cd "/Users/arushivaidya/Desktop/College/sem 7/Indian Knowledge Systems/EL/project/backend"
+  ./venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+
+2. START THE FRONTEND
+
+Open Terminal 2:
+
+  cd "/Users/arushivaidya/Desktop/College/sem 7/Indian Knowledge Systems/EL/project/frontend"
+  python3 -m http.server 5173
+
+
+3. OPEN THE APPLICATION
+
+Open this URL in your browser:
+
+  http://127.0.0.1:5173
+
+
+4. SHOW THE DERIVATION WORKFLOW
+
+On the Derive tab:
+
+  1. Enter Sanskrit input: अइ
+  2. Click Calculate derivation.
+  3. Show the output: ए
+  4. Show the derivation trace and rules that fired.
+
+Try these additional inputs:
+
+  अए  ->  ए
+  तश  ->  चश
+  तष  ->  टष
+  दक  ->  तक
+  मक  ->  ंक
+
+
+5. SHOW RULE SELECTION
+
+On the Derive tab:
+
+  1. Click None to clear all selected rules.
+  2. Click All to restore every available rule.
+  3. Select or clear individual rules.
+  4. Enter अइ and click Calculate derivation again.
+  5. Explain that only selected rules participate in the derivation.
+
+The interface currently displays 11 selectable rules.
+
+
+6. SHOW COUNTERFACTUAL ANALYSIS
+
+Open the Counterfactual tab:
+
+  1. Choose a rule to remove, such as P60187.
+  2. Click Run counterfactual.
+  3. Compare the Full Grammar output with the altered output.
+  4. Show the changed-step count.
+  5. Show the baseline and counterfactual traces.
+
+Example:
+
+  Input: अइ
+  Full grammar: ए
+  Without P60187: अइ
+
+
+7. SHOW THE RULE ATLAS
+
+Open the Rule atlas tab and show:
+
+  - Dependency graph nodes
+  - Dependency and blocking edges
+  - Observed rule interactions
+  - Impact ranking for the available rules
+
+
+8. IF PORT 8000 IS ALREADY IN USE
+
+The backend is probably already running. Do not start a second backend.
+Open the frontend directly:
+
+  http://127.0.0.1:5173
+
+If the frontend is not running, start only Terminal 2 from above.

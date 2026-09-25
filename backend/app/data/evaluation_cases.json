@@ -1,0 +1,22 @@
+{
+  "name": "panini_sandhi_evaluation_v1",
+  "description": "Deterministic smoke corpus for the executable 11-rule sandhi subset.",
+  "cases": [
+    {"id": "vowel-01", "input": "अइ", "expected_output": "ए"},
+    {"id": "vowel-02", "input": "इअ", "expected_output": "यअ"},
+    {"id": "vowel-03", "input": "उअ", "expected_output": "वअ"},
+    {"id": "vowel-04", "input": "एअ", "expected_output": "अयअ"},
+    {"id": "vowel-05", "input": "ओअ", "expected_output": "अवअ"},
+    {"id": "vowel-06", "input": "अउ", "expected_output": "ओ"},
+    {"id": "vowel-07", "input": "आउ", "expected_output": "ओ"},
+    {"id": "vowel-08", "input": "ऋअ", "expected_output": "रअ"},
+    {"id": "vowel-09", "input": "अए", "expected_output": "ए"},
+    {"id": "vowel-10", "input": "अऐ", "expected_output": "ऐ"},
+    {"id": "vowel-11", "input": "अअ", "expected_output": "आ"},
+    {"id": "consonant-01", "input": "तश", "expected_output": "चश"},
+    {"id": "consonant-02", "input": "तष", "expected_output": "टष"},
+    {"id": "consonant-03", "input": "दक", "expected_output": "तक"},
+    {"id": "consonant-04", "input": "मक", "expected_output": "ंक"},
+    {"id": "consonant-05", "input": "नमसत", "expected_output": "नमःत"}
+  ]
+}

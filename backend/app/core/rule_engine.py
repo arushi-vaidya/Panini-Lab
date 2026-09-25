@@ -277,6 +277,34 @@ class RuleEngine:
                 "ऌ",
             }
 
+        if class_name == "consonant":
+            return symbol in {
+                "क", "ख", "ग", "घ", "ङ", "च", "छ", "ज", "झ", "ञ",
+                "ट", "ठ", "ड", "ढ", "ण", "त", "थ", "द", "ध", "न",
+                "प", "फ", "ब", "भ", "म", "य", "र", "ल", "व", "श", "ष", "स", "ह",
+            }
+
+        if class_name == "ścu":
+            return symbol in {"च", "छ", "ज", "झ", "ञ", "श"}
+
+        if class_name == "ṣṭu":
+            return symbol in {"ट", "ठ", "ड", "ढ", "ण", "ष"}
+
+        if class_name == "khar":
+            return symbol in {"क", "ख", "च", "छ", "ट", "ठ", "त", "थ", "प", "फ", "श", "ष", "स"}
+
+        if class_name == "sibilant":
+            return symbol in {"श", "ष", "स"}
+
+        if class_name == "dental_stop":
+            return symbol in {"त", "थ", "द", "ध", "न", "स"}
+
+        if class_name == "voiced_stop":
+            return symbol in {"ग", "घ", "ज", "झ", "ड", "ढ", "द", "ध", "ब", "भ"}
+
+        if class_name == "m_sound":
+            return symbol == "म"
+
         return False
 
     # ---------------------------------------------------------
@@ -300,6 +328,7 @@ class RuleEngine:
             return self._contextual_substitute(
                 state,
                 operation.mapping,
+                operation.metadata.get("right_class"),
             )
 
         if operation.operation_type == OperationType.CONTEXTUAL_PAIR_SUBSTITUTE:
@@ -354,6 +383,7 @@ class RuleEngine:
         self,
         state: GrammarState,
         mapping: Dict[str, str],
+        right_class: Optional[str] = None,
     ) -> GrammarState:
 
         tokens = [
@@ -374,7 +404,10 @@ class RuleEngine:
             if replacement is None:
                 continue
 
-            if not self._is_vowel(right.surface):
+            if right_class:
+                if not self._belongs_to_class(right.surface, right_class):
+                    continue
+            elif not self._is_vowel(right.surface):
                 continue
 
             left.surface = replacement

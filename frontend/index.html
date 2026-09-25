@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panini Lab | Grammar debugger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <header class="topbar">
+      <a class="brand" href="#top"><span class="brand-mark">प</span><span>PĀṆINI <b>/</b> LAB</span></a>
+      <div class="status"><i></i><span id="api-status">connecting to engine</span><span class="version">v0.2</span></div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="eyebrow">अष्टाध्यायी · प्रयोगशाला ०१</div>
+        <h1>Read the rules.<br /><em>Trace the change.</em></h1>
+        <p class="lede">An experimental manuscript for exploring Pāṇinian vowel sandhi, rule order, and the consequences of taking one rule away.</p>
+        <div class="hero-note"><span>अइ</span><span class="arrow">→</span><span>ए</span><small>11 rules · deterministic derivation</small></div>
+      </section>
+
+      <nav class="tabs" aria-label="Lab sections">
+        <button class="tab active" data-view="derive">Derive <span>01</span></button>
+        <button class="tab" data-view="experiment">Counterfactual <span>02</span></button>
+        <button class="tab" data-view="atlas">Rule atlas <span>03</span></button>
+      </nav>
+
+      <section id="derive-view" class="view active-view">
+        <div class="workspace-grid">
+          <aside class="panel input-panel">
+            <div class="panel-kicker">01 / INPUT SURFACE</div>
+            <label for="surface">Sanskrit sequence</label>
+            <div class="input-wrap"><input id="surface" value="अइ" autocomplete="off" /><span>⌘ ↵</span></div>
+            <p class="hint">Type a vowel sequence in Devanāgarī.</p>
+            <div class="quick-picks"><button data-input="अइ">अइ</button><button data-input="इअ">इअ</button><button data-input="एअ">एअ</button><button data-input="अउ">अउ</button></div>
+            <div class="rule-picker">
+              <div class="picker-title"><span>RULES IN THIS DERIVATION</span><span><button id="select-all-rules">All</button><button id="clear-rules">None</button></span></div>
+              <p class="selection-note">Choose any combination from the complete loaded rule registry.</p>
+              <div id="rule-list" class="rule-list"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+            </div>
+            <button id="derive-btn" class="primary-btn">Calculate derivation <span>↗</span></button>
+          </aside>
+
+          <div class="result-column">
+            <section class="panel result-panel">
+              <div class="result-head"><div><div class="panel-kicker">02 / RESULT</div><div id="result-caption">Current derivation</div></div><div class="result-state" id="result-state">READY</div></div>
+              <div class="output-line"><span id="result-input">अइ</span><span class="line-arrow">→</span><strong id="result-output">—</strong></div>
+              <div class="metrics"><div><span>RULES FIRED</span><b id="metric-rules">—</b></div><div><span>STEPS</span><b id="metric-steps">—</b></div><div><span>HALT</span><b id="metric-halt">—</b></div></div>
+            </section>
+            <section class="panel trace-panel"><div class="panel-kicker">03 / DERIVATION TRACE</div><div id="trace" class="trace"><div class="empty-state">Run a derivation to reveal each transformation.</div></div></section>
+          </div>
+        </div>
+      </section>
+
+      <section id="experiment-view" class="view">
+        <div class="section-heading"><div><div class="eyebrow">INTERVENTION MODE</div><h2>What changes when a rule disappears?</h2></div><p>Compare the full grammar against a deliberately incomplete one.</p></div>
+        <div class="experiment-layout"><section class="panel experiment-controls"><div class="panel-kicker">SELECT RULES TO REMOVE</div><div id="experiment-rules" class="rule-list"></div><button id="experiment-btn" class="primary-btn">Run counterfactual <span>↗</span></button></section><section class="panel comparison"><div class="panel-kicker">COMPARISON</div><div id="comparison-content" class="empty-state">Choose at least one rule, then run the experiment.</div></section></div>
+      </section>
+
+      <section id="atlas-view" class="view"><div class="section-heading"><div><div class="eyebrow">SYSTEM MAP</div><h2>Rule atlas</h2></div><p>The small, precise world behind each output.</p></div><div class="atlas-grid"><section class="panel graph-panel"><div class="panel-kicker">DEPENDENCY GRAPH</div><div id="graph" class="graph"></div><div id="graph-edges" class="edge-list"></div></section><section class="panel interaction-panel"><div class="panel-kicker">OBSERVED INTERACTIONS</div><div id="interactions" class="interaction-list"></div><div class="panel-kicker impact-kicker">IMPACT RANKING</div><div id="impact" class="impact-list"></div></section></div></section>
+    </main>
+    <footer><span>PĀṆINI-LAB</span><span>Executable grammar for experimental minds.</span></footer>
+    <script src="app.js"></script>
+    <script src="enhancements.js"></script>
+  </body>
+</html>

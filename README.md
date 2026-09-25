@@ -3,6 +3,23 @@
 # PĀṆINI-LAB
 ## A Counterfactual Computational Framework for Rule-Dependency Analysis of Pāṇinian Grammar
 PĀṆINI-LAB is a research-oriented computational framework for modeling selected rules of Pāṇinian grammar as an executable rule system and experimentally analyzing their interactions.
+
+## Run the lab
+
+Start the API from `backend`:
+
+```bash
+./venv/bin/uvicorn app.main:app --reload
+```
+
+In a second terminal, serve the frontend:
+
+```bash
+cd frontend
+python3 -m http.server 5173
+```
+
+Open `http://127.0.0.1:5173`. The frontend connects to the API at `http://127.0.0.1:8000` by default. Set `window.PANINI_API_URL` before loading `app.js` if the API is hosted elsewhere.
 The central idea is to treat a computationalized subset of the Aṣṭādhyāyī not merely as a grammar implementation, but as an experimental system that can be inspected, traced, modified, and tested under controlled counterfactual conditions.
 The long-term objective is to build a computational "debugger for grammar" that allows researchers to:
 - Execute selected Pāṇinian rules.
@@ -73,15 +90,20 @@ into one experimental framework.
 # 4. Scope
 PĀṆINI-LAB is currently scoped as a research prototype.
 It does NOT attempt to computationally implement the entire Aṣṭādhyāyī.
-The current validated linguistic scope consists of a small subset of Pāṇinian vowel-sandhi rules.
+The current executable linguistic scope consists of a small subset of Pāṇinian vowel and consonant sandhi rules.
 The project prioritizes:
 > Correctness and experimental validity over the number of rules implemented.
-The initial validated subset contains five sūtras:
+The initial validated subset contains these eight sūtras:
 1. 6.1.77 — इको यणचि
 2. 6.1.78 — एचोऽयवायावः
 3. 6.1.87 — आद्गुणः
 4. 6.1.88 — वृद्धिरेचि
 5. 6.1.101 — अकः सवर्णे दीर्घः
+6. 6.1.94 — एङि पररूपम्
+7. 8.4.40 — स्तोः श्चुना श्चुः
+8. 8.4.41 — ष्टुना ष्टुः
+
+The executable registry also includes three explicitly marked experimental subset rules: 8.3.15, 8.4.55, and 8.2.3. This gives the interface 11 selectable rules in total.
 The rule set can be expanded after the computational representation and experiments are validated.
 ---
 # 5. System Architecture
@@ -109,7 +131,8 @@ Current architecture:
     Visualization
           ↓
     Research Experiments
-The Counterfactual Engine, Comparative Analysis, and Visualization components are planned future stages.
+The Counterfactual Engine, Comparative Analysis, API, and interactive visualization are implemented for the current 11-rule research subset.
+The Counterfactual Engine, Comparative Analysis, API, and interactive visualization are implemented for the current 11-rule research subset.
 ---
 # 6. Development Status
 | Phase | Component | Status |
@@ -119,12 +142,29 @@ The Counterfactual Engine, Comparative Analysis, and Visualization components ar
 | Phase 2 | Validated Pāṇinian vowel-sandhi subset | ✅ Complete |
 | Phase 3A | Static dependency graph | ✅ Complete |
 | Phase 3B | Derivation-aware interaction mining | ✅ Complete |
-| Phase 4 | Counterfactual engine | ⏳ Planned |
-| Phase 5 | Rule-impact analysis | ⏳ Planned |
-| Phase 6 | Backend/API integration | ⏳ Planned |
-| Phase 7 | Interactive visualization | ⏳ Planned |
-| Phase 8 | Experimental evaluation | ⏳ Planned |
-| Phase 9 | Research output | ⏳ Planned |
+| Phase 4 | Counterfactual engine | ✅ Complete for rule removal and reordering |
+| Phase 5 | Rule-impact analysis | ✅ Complete for the included evaluation corpus |
+| Phase 6 | Backend/API integration | ✅ Complete |
+| Phase 7 | Interactive visualization | ✅ Complete |
+| Phase 8 | Experimental evaluation | ✅ Complete for the current 16-case corpus |
+| Phase 9 | Research output | ✅ Complete: reproducible report in `research/REPORT.md` |
+
+Phases 1A–9 are implemented for the current eight-rule validated subset plus three experimental consonant-sandhi rules. The current evaluation contains 16 curated cases with exact-match scoring, rule coverage, and counterfactual sensitivity. See `research/REPORT.md` for the measured results and limitations.
+
+## Implemented capabilities
+
+- `POST /derive` executes a deterministic derivation and returns its complete trace.
+- `POST /experiment` compares baseline and counterfactual traces, with rule removal and custom rule ordering.
+- `POST /experiments` runs the same counterfactual across multiple inputs.
+- `POST /impact` ranks each rule by output-change rate over a supplied or built-in corpus.
+- `GET /graph` returns rule nodes and typed dependency/blocking edges.
+- `GET /interactions` and `POST /interactions` expose observed co-firing and ordering relationships.
+- `GET /evaluation` runs the reproducible 16-case evaluation corpus and returns accuracy, coverage, per-rule statistics, and counterfactual sensitivity.
+- The frontend visualizes derivations, counterfactual traces, graph relationships, interactions, and impact rankings.
+
+## IEEE paper
+
+The IEEE-style manuscript is available at [paper/panini_lab_ieee.tex](paper/panini_lab_ieee.tex), with flowchart assets in [paper/figures](paper/figures) and compilation instructions in [paper/README.md](paper/README.md). The paper reports the current measured results while explicitly separating validated rules, experimental subset rules, and limitations of the 16-case corpus.
 ---
 # 7. Phase 1A — Rule Representation
 ## Status: COMPLETE
@@ -219,7 +259,8 @@ This trace becomes the primary evidence source for Phase 3B interaction mining a
 ---
 # 10. Phase 2 — Pāṇinian Vowel Sandhi
 ## Status: COMPLETE
-Phase 2 replaced the initial synthetic rule demonstrations with a validated computational subset of five Pāṇinian vowel-sandhi sūtras.
+Phase 2 replaced the initial synthetic rule demonstrations with a validated computational subset of Pāṇinian vowel and consonant sandhi sūtras.
+Phase 2 replaced the initial synthetic rule demonstrations with a validated computational subset of Pāṇinian vowel and consonant sandhi sūtras.
 ---
 ## 10.1 — 6.1.77 — इको यणचि
 Rule ID:
@@ -1105,7 +1146,7 @@ PĀṆINI-LAB is currently a research prototype rather than a complete implement
 
 Limited Rule Coverage
 
-Only five Pāṇinian vowel-sandhi rules are currently included in the validated subset.
+Eleven executable Pāṇinian sandhi rules are currently included: eight validated-subset rules and three explicitly marked experimental-subset rules.
 
 ⸻
 
@@ -1268,7 +1309,7 @@ Current completed milestones:
 * [x]	Derivation traces
 * [x]	Rule repeatability handling
 * [x]	Sanskrit tokenization
-* [x]	Five validated Pāṇinian vowel-sandhi rules
+* [x]	Eight validated Pāṇinian vowel and consonant-sandhi rules plus three experimental subset rules
 * [x]	Phase 2 automated tests
 * [x]	Static dependency graph
 * [x]	Dependency graph tests
@@ -1281,7 +1322,7 @@ Current completed milestones:
 
 37. Current Milestone
 
-PĀṆINI-LAB has progressed from a structured rule representation to an executable and traceable computational model of a validated five-rule Pāṇinian vowel-sandhi subset. Phase 3 extends this system with static dependency modeling and derivation-aware empirical interaction mining, providing the foundation for controlled counterfactual experiments.
+PĀṆINI-LAB has progressed from a structured rule representation to an executable and traceable computational model of an 11-rule Pāṇinian sandhi subset. Phase 3 extends this system with static dependency modeling and derivation-aware empirical interaction mining, providing the foundation for controlled counterfactual experiments.
 
 ⸻
 
