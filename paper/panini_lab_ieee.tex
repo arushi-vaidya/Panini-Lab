@@ -5,7 +5,7 @@
   \usepackage{fontspec}
   \usepackage{polyglossia}
   \setmainlanguage{english}
-  \newfontfamily\devanagarifont[Script=Devanagari]{Noto Serif Devanagari}
+  \newfontfamily\devanagarifont[Script=Devanagari]{Annapurna SIL}
 \else
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
@@ -24,14 +24,14 @@
 \newcommand{\system}{P\={A}\d{N}INI--LAB}
 \newcommand{\code}[1]{\texttt{#1}}
 
-\title{P\={A}\d{N}INI--LAB: An Executable Experimental Framework for\ Rule-Dependency and Counterfactual Analysis of P\={A}\d{N}inian Sandhi}
+\title{\system: An Executable Experimental Framework for Rule-Dependency and Counterfactual Analysis of P\={a}\d{N}inian Sandhi}
 
 \author{\IEEEauthorblockN{Arushi Vaidya}
 \IEEEauthorblockA{Indian Knowledge Systems\\
 College Project\\
 India}
 \and
-\IEEEauthorblockN{Aryan Gupya}
+\IEEEauthorblockN{Aryan Gupta}
 \IEEEauthorblockA{Indian Knowledge Systems\\
 College Project\\
 India}
@@ -45,9 +45,9 @@ India}}
 \maketitle
 
 \begin{abstract}
-P\={A}\d{N}ini's \textit{A\d{s}t\=adhy\=ay\=i} represents a highly structured system of Sanskrit grammar based on concise rules, conditions, transformations, and interactions between grammatical operations. Its formal and rule-driven nature makes it relevant to computational linguistics and to the study of the Indian Knowledge System. Existing computational approaches have primarily focused on implementing P\={A}\d{N}inian rules for Sanskrit analysis, generation, parsing, and derivation. This paper presents a different perspective: treating the grammatical rule system itself as an experimentally analysable computational model.
+P\={a}\d{N}ini's \textit{A\d{s}t\=adhy\=ay\=i} is a rule-organized grammar of Sanskrit built from concise conditions, transformations, and interactions among operations, and its formal, algorithmic character has long attracted computational and Indian Knowledge Systems scholarship alike. Prior computational work has largely treated P\={a}\d{N}inian rules as a means to an end---parsing, generating, or deriving Sanskrit forms. This paper inverts that focus: it treats the rule system itself as the object under study, and asks whether a bounded implementation of that system can be made experimentally interrogable.
 
-We introduce \system, an interactive framework in which a selected rule subset is encoded as executable, traceable entities. The system records each transformation, constructs typed dependency and interaction graphs, and supports controlled counterfactual interventions including rule removal and rule-order changes. A corpus evaluator reports exact-match accuracy, rule coverage, per-rule firing statistics, and output sensitivity under rule ablation. The current prototype contains eleven executable sandhi rules and a sixteen-case evaluation corpus. All sixteen cases match their curated expected outputs and all eleven registered rules are observed at least once. These measurements establish internal reproducibility of the prototype corpus, not complete coverage or correctness for the \textit{A\d{s}t\=adhy\=ay\=i}. The contribution is therefore best understood as a reproducible experimental methodology and software artifact for studying operational behaviour in a computationalized P\={a}\d{N}inian rule system.
+We introduce \system, an interactive framework in which a selected rule subset is encoded as executable, traceable entities. Every transformation is logged, typed dependency and interaction graphs are constructed from rule metadata and execution traces respectively, and controlled counterfactual interventions---principally rule ablation---let a researcher compare a baseline derivation against one run with a rule disabled. A deterministic corpus evaluator reports exact-match agreement against curated expected outputs, rule coverage, per-rule firing statistics, and output sensitivity under ablation. The current prototype implements eleven executable sandhi rules against a sixteen-case evaluation corpus: all sixteen cases match their stored expected outputs, and all eleven registered rules fire at least once. We report these results plainly as internal reproducibility of a fixed prototype corpus, not as coverage of, or external linguistic validity for, the \textit{A\d{s}t\=adhy\=ay\=i} as a whole. The contribution is accordingly a reproducible experimental methodology and open software artifact for studying the operational behaviour of a computationalized P\={a}\d{N}inian rule system, together with an honest account of what the current evidence does and does not support.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -55,36 +55,38 @@ P\={a}\d{N}ini, Sanskrit, sandhi, computational grammar, counterfactual analysis
 \end{IEEEkeywords}
 
 \section{Introduction}
-P\={a}\d{N}ini's grammatical tradition is often described through a compact rule system whose effects depend on formal environments, ordering, blocking, and technical categories. A computational implementation can reproduce selected transformations, but a final surface form alone does not reveal which rules were applicable, which rules were pre-empted, or how the derivation would have changed under an intervention.
+P\={a}\d{N}ini's grammatical tradition is compact by design: a rule's effect depends on formal environments, ordering, blocking, and technical categories that are only implicit in a final surface form. A computational implementation can reproduce selected transformations, but the output word alone does not reveal which rules were applicable, which were pre-empted, or how the derivation would have changed under an intervention. Most existing Sanskrit computational systems are optimized to produce a correct form efficiently; comparatively little tooling is built to make the \emph{process} of derivation, and the rule system that drives it, an object of direct experimental inspection.
 
-This paper presents \system, a research prototype that changes the unit of analysis from the output word to the executable rule system. A derivation is represented as a sequence of typed grammar states. Each successful operation records its input state, output state, rule identity, rule metadata, and explanation. The same engine can be run with a rule disabled or with a specified rule order, allowing a baseline and a counterfactual derivation to be compared.
+This paper presents \system, a research prototype that relocates the unit of analysis from the output word to the executable rule system that produced it. A derivation is represented as a sequence of typed grammar states, and every successful operation records its input state, output state, rule identity, rule metadata, and a human-readable explanation. Because the engine can also be run with selected rules disabled, a baseline derivation and an ablated derivation can be directly compared. The API additionally accepts an explicit rule-order field, but the current derivation engine sorts rules by priority at construction time, so this field does not yet implement an effective ordering intervention; we report this candidly in Section~\ref{sec:limitations} rather than treating it as a supported result. Rule ablation, not rule reordering, is therefore the counterfactual experiment evaluated in this paper.
 
-The central claim is deliberately bounded. \system does not claim to implement the complete \textit{A\d{s}t\=adhy\=ay\=i}, nor does it claim that counterfactual sensitivity is equivalent to historical grammatical dependency. Instead, it demonstrates an engineering and research methodology for making a computationalized grammar inspectable and experimentally manipulable.
+The central claim is deliberately bounded. \system does not claim to implement the complete \textit{A\d{s}t\=adhy\=ay\=i}, and it does not claim that counterfactual sensitivity, as measured inside the program, is equivalent to historical or theoretical grammatical dependency. What it demonstrates is an engineering and research methodology for making a computationalized grammar inspectable and experimentally manipulable, together with the evaluation discipline needed to state exactly what a small prototype has and has not shown.
 
 The paper makes four contributions:
 \begin{enumerate}[leftmargin=*]
-  \item an executable rule representation for a small P\={a}\d{N}inian sandhi subset;
-  \item a deterministic derivation engine with complete state traces and typed dependency/interactions graphs;
-  \item counterfactual and impact-analysis procedures that measure output changes under rule ablation and ordering interventions; and
-  \item a reproducible evaluation corpus, API, interface, and research report that make the prototype independently inspectable.
+  \item an executable rule representation for a small but linguistically grounded P\={a}\d{N}inian sandhi subset, with each rule traceable to its s\=utra;
+  \item a deterministic derivation engine that produces step-level state traces and maintains distinct representations for \emph{declared} rule relations (from rule metadata) and \emph{observed} execution interactions (mined from traces);
+  \item counterfactual and impact-analysis procedures that quantify output change under rule ablation, together with an explicit operational definition of what that measurement does and does not license; and
+  \item a reproducible evaluation protocol, public API, browser interface, and research artifact that make every quantitative claim in this paper independently checkable.
 \end{enumerate}
+
+The selected executable rules are not claimed to exhaust their corresponding traditional descriptions; the paper instead evaluates whether a bounded computational model can expose its own operational behaviour in a repeatable way. The artifact's implemented interface is broader than the empirical evidence reported here: the API and browser interface expose derivation, graph, interaction, and experiment views, while the quantitative claims in this paper are restricted to the sixteen-case corpus and ablation runs reported in Section~\ref{sec:results}.
 
 \section{Background and Related Work}
 \subsection{P\={a}\d{N}inian grammar as a formal system}
-The \textit{A\d{s}t\=adhy\=ay\=i} is a rule-organized grammatical description in which concise s\=utras operate over formal categories and environments. Traditional scholarship has analysed its metarules, ordering principles, technical vocabulary, and derivational architecture \cite{panini1910,cardona1997,kiparsky1969}. These works provide the linguistic and historical basis for treating a rule not merely as a descriptive statement, but as an operation whose applicability is conditioned by a structured context.
+The \textit{A\d{s}t\=adhy\=ay\=i} is a rule-organized grammatical description in which concise s\=utras operate over formal categories and environments, coordinated by an explicit apparatus of metarules governing precedence, blocking, and scope. Traditional scholarship has analysed this architecture in depth \cite{panini1910,cardona1997,kiparsky1969,staal1969}, and has specifically framed P\={a}\d{N}ini's metalanguage as a formal system in its own right rather than an incidental descriptive device \cite{staal1969}. These works provide the linguistic and historical basis for treating a s\=utra not merely as a descriptive statement, but as an operation whose applicability is conditioned by a structured, inspectable context---the premise this paper builds on computationally.
 
-\subsection{Paninian computational linguistics}
-Paninian approaches to natural-language processing have been used to organize grammatical relations, parsing, generation, and linguistic representations \cite{bharati1995}. Such work demonstrates the value of formal grammatical abstractions in computational systems. Sanskrit computational resources have also addressed morphology, lexical lookup, segmentation, tagging, and sandhi processing, including the Sanskrit Heritage ecosystem \cite{huet2006,huet2010}. These systems are essential precedents for executable Sanskrit processing, but their primary objective is linguistic analysis or generation rather than systematic experimentation with the rule system itself.
+\subsection{P\={a}\d{N}inian computational linguistics}
+P\={a}\d{N}inian approaches to natural-language processing have been used to organize grammatical relations, parsing, generation, and linguistic representations \cite{bharati1995}, demonstrating the enduring value of formal grammatical abstractions in computational systems. Sanskrit computational resources have separately addressed morphology, lexical lookup, segmentation, tagging, and sandhi processing, including the Sanskrit Heritage ecosystem \cite{huet2006,huet2010}. Both lines of work are essential precedents for executable Sanskrit processing, but in each case the rule system is instrumental: its primary purpose is to produce a correct analysis or generation, not to be interrogated as the object of study. \system is positioned differently: correctness on a corpus is treated as a necessary precondition for experimentation, not as the paper's central claim.
 
 \subsection{Rule systems, graphs, and program analysis}
-The present work also relates to production systems, graph-based dependency analysis, ablation studies, and program tracing. In contrast to ordinary execution tracing, the proposed trace retains grammatical state and rule semantics. In contrast to a static dependency graph, the interaction miner records relationships observed in actual derivations. The distinction matters: a declared dependency is a property of the encoded grammar, whereas an observed interaction is a property of a particular execution corpus.
+The present work also relates to production systems, graph-based dependency analysis, ablation studies, and program tracing, areas whose general vocabulary of state, condition, and transition is standard in computational linguistics and NLP more broadly \cite{jurafsky2023}. In contrast to ordinary execution tracing, the trace produced here retains grammatical state and rule metadata rather than only a program counter. Representing rule relations as typed graphs follows established practice in graph-based dependency and network analysis \cite{hagberg2008}; the implementation applies that practice to a grammatical rule registry rather than to a general-purpose network. It further distinguishes two kinds of graph evidence: declared dependency and blocking edges, loaded from rule metadata, and observed-before or co-fired edges, mined from successful derivation traces. These are not interchangeable. Declared edges describe the encoded registry; observed edges describe only executions within a specified corpus. An empty observed graph is therefore a valid measurement, not evidence that the underlying grammar has no interactions, and Section~\ref{sec:limitations} treats this distinction as a first-class threat to validity rather than a footnote.
 
 \subsection{Positioning and novelty claim}
-The novelty claim is integrative and methodological. The individual ingredients---computational Sanskrit processing, rule representation, derivation tracing, dependency graphs, and visualization---have relevant precedents. The project combines them into a grammar-debugging workflow in which researchers can ask: which rules fired, what changed when one rule was removed, which rules are repeatedly co-activated, and which rules are influential for a declared corpus? Establishing novelty beyond this prototype requires a systematic comparison with existing Sanskrit grammars and experimental platforms; this paper therefore uses the narrower claim of an executable experimental framework.
+The novelty claim is integrative and methodological rather than a claim about any single technique. The individual ingredients---computational Sanskrit processing, rule representation, derivation tracing, dependency graphs, and interactive visualization---each have relevant precedents cited above. The contribution is combining them into a single grammar-debugging workflow that lets a researcher ask concrete, answerable questions of an executable grammar: which rules fired on a given input, what changed when one rule was removed, which rules are repeatedly co-activated, and which rules are most influential over a declared corpus. Establishing novelty beyond this prototype would require a systematic comparison with existing Sanskrit computational platforms and experimental frameworks; absent that comparison, this paper restricts itself to the narrower and defensible claim of an executable experimental framework for a bounded rule subset.
 
 \section{Research Questions}
 The prototype is evaluated against the following questions:
-\begin{description}[leftmargin=*]
+\begin{description}[leftmargin=2.4em,labelindent=0pt,style=nextline]
   \item[RQ1] Can a selected P\={a}\d{N}inian sandhi subset be represented as deterministic executable rules with inspectable state transitions?
   \item[RQ2] Can static rule relations and empirically observed execution relations be represented separately and queried through an API?
   \item[RQ3] Can rule ablation produce reproducible differences in final outputs and intermediate traces?
@@ -92,7 +94,7 @@ The prototype is evaluated against the following questions:
 \end{description}
 
 \section{System Architecture}
-Figure~\ref{fig:architecture} shows the complete pipeline. The rule registry loads structured JSON definitions into Pydantic grammar models. The tokenizer creates a sequence of active state tokens. The rule engine evaluates conditions and applies operations. The derivation engine repeatedly evaluates rules in descending priority, restarts from the highest-priority rule after each successful change, and terminates on a fixed point or a safety limit.
+Figure~\ref{fig:architecture} shows the implemented pipeline. The rule registry loads structured JSON definitions into Pydantic grammar models. The tokenizer creates a sequence of active state tokens. The rule engine evaluates conditions and applies operations. The derivation engine evaluates rules in descending priority and restarts from the highest-priority rule after each successful change. It terminates when no enabled rule changes the state or when the configured step limit is reached. Every result returned by the API includes the final surface, fired-rule identifiers, termination reason, and serializable trace records.
 
 \begin{figure}[t]
   \centering
@@ -104,11 +106,15 @@ Figure~\ref{fig:architecture} shows the complete pipeline. The rule registry loa
 \subsection{Grammar state}
 A state is a tuple containing active tokens, token surfaces, features, markers, a step counter, and metadata. The visible surface is the concatenation of active token surfaces. A derivation step stores both the pre-state and post-state. The step counter is bookkeeping and is excluded from semantic state-change comparison; consequently, a rule that performs no grammatical change is not recorded as fired.
 
-\subsection{Rule representation}
-Each rule has a rule identifier, s\=utra, name, description, priority, status, repeatability, conditions, operations, scope, dependencies, blocking relations, examples, and metadata. Conditions currently include pattern, feature, marker, and adjacent context-pair tests. Operations include substitution, contextual substitution, pair substitution, insertion, deletion, feature update, and marker operations.
+Let $S$ be the set of representable states and let $\pi:S\rightarrow S_{sem}$ remove bookkeeping fields from a state. A rule $r$ defines a partial transition $T_r$ whose domain is the set of states satisfying its encoded conditions. A transition is recorded as a successful grammatical step only when $\pi(T_r(s))\neq\pi(s)$. This operational definition prevents a counter increment or other bookkeeping update from being mistaken for a grammatical transformation. It does not assert that $S_{sem}$ captures every linguistically relevant distinction; in particular, the current representation does not encode full morphology, accent, or derivational history.
+
+\subsection{Rule schema and execution contract}
+Each registry entry combines identity and provenance fields (rule identifier, s\=utra, name, description, status, and metadata), scheduling fields (priority, enabled state, and repeatability), applicability conditions, transformation operations, and declared graph relations (dependencies, blocking relations, and worked examples). The current implementation supports pattern, feature, marker, and adjacent context-pair conditions, and an operation vocabulary of substitution, contextual substitution, pair substitution, insertion, deletion, feature update, and marker update. Conditions are evaluated against the current token state; operations return a transformed state. The execution engine owns scheduling and trace construction, while the registry owns rule data; this separation keeps rule definitions inspectable as data and permits rule ablation without editing the rule implementation. The full schema is broader than what the evaluation corpus exercises: the corpus primarily tests the specific transformations listed in Table~\ref{tab:rules}.
 
 \subsection{Deterministic execution}
-Rules are sorted by descending priority and rule identifier. Non-repeatable rules are prevented from firing twice in one derivation. After a successful transformation, evaluation restarts from the highest-priority rule. The engine returns the initial state, final state, ordered steps, skipped rules, disabled rules, fired rules, and termination reason.
+Rules are sorted by descending priority and rule identifier, with the identifier acting as a deterministic tie-breaker. Non-repeatable rules are prevented from firing twice in one derivation. The execution protocol is: (1) tokenize the input into an initial state; (2) scan enabled rules in descending priority; (3) evaluate each rule's encoded conditions; (4) apply the first applicable operation that changes semantic state; (5) record the before/after states and restart scanning from the highest-priority rule; and (6) terminate at a fixed point or the 100-step safety limit. The engine returns the initial state, final state, ordered steps, skipped rules, disabled rules, fired rules, and termination reason.
+
+An ablation run skips the selected rule identifiers while holding the input, the remaining rule definitions, and the stopping criterion constant, so that a baseline and an ablated run differ only in which rules were available. Although the experiment request also accepts a rule permutation, the engine sorts the active rules by priority when it is constructed; the permutation is therefore not an effective intervention in the current implementation and is excluded from our results (Section~\ref{sec:limitations}).
 
 \section{Executable Rule Inventory}
 Table~\ref{tab:rules} lists every rule currently loaded by the registry. The table distinguishes validated-subset entries from simplified experimental-subset entries. The statuses are software-scope labels, not claims that the implementation captures every traditional condition of the corresponding s\=utra.
@@ -140,7 +146,7 @@ P823 & 8.2.3 & \textit{mo 'nusv\=ara\d{h}} & experimental & m to anusv\=ara befo
 The implementation uses a deliberately small phonological class inventory. For example, \textit{ik}, \textit{ec}, \textit{aK}, \textit{\d{s}cu}, \textit{\d{s}\d{t}u}, \textit{khar}, and consonant classes are represented as explicit sets of Devan\=agar\=i symbols. This makes the current behaviour auditable, while also exposing the limitation that class membership is not yet a full account of Sanskrit phonological context.
 
 \section{Counterfactual Experimentation}
-Figure~\ref{fig:experiment} shows the experimental loop. A baseline derivation is compared with a counterfactual derivation using the same input state and either a disabled-rule set or an explicit rule order. The comparison records output changes, step changes, removed fired rules, newly fired rules, and both complete traces.
+Figure~\ref{fig:experiment} shows the implemented ablation loop. A baseline derivation is compared with a counterfactual derivation from the same input state with a selected rule disabled. The comparison records output changes, step changes, removed fired rules, newly fired rules, and both complete traces. The API accepts explicit order requests, but as described above, effective order intervention is not supported by the current execution path.
 
 \begin{figure}[t]
   \centering
@@ -155,19 +161,44 @@ For an input $x$ and disabled rule $r$, let $Y(x)$ be the baseline output and $Y
 \end{equation}
 where $C$ is the evaluation corpus. $S(r)$ is an operational impact measure for this implementation; it is not interpreted as a historical, theoretical, or universal dependency score.
 
-The API exposes single experiments at \code{/experiment}, batch experiments at \code{/experiments}, rule impact at \code{/impact}, graph data at \code{/graph}, interaction mining at \code{/interactions}, and corpus evaluation at \code{/evaluation}.
+The API exposes single experiments at \code{/experiment}, batch experiments at \code{/experiments}, rule impact at \code{/impact}, graph data at \code{/graph}, interaction mining at \code{/interactions}, and corpus evaluation at \code{/evaluation}. This endpoint inventory documents implemented software surfaces; it does not imply that each endpoint has been evaluated as a scientific instrument in the present study.
 
 \section{Evaluation Method}
 \subsection{Corpus}
-The versioned corpus contains sixteen short Devan\=agar\=i sequences. Nine cases exercise vowel transformations, two cases exercise selected v\=rddhi/parar\=upa environments, and five cases exercise consonant, visarga, or anusv\=ara transformations. Expected outputs are stored explicitly in \code{evaluation_cases.json}; they are not generated from the same function under test.
+The versioned corpus contains sixteen short Devan\=agar\=i sequences: eleven vowel transformations and five consonant, visarga, or anusv\=ara transformations. Expected outputs are stored explicitly in \code{evaluation\_cases.json}; they are not generated by the derivation function under test. The corpus is a controlled smoke corpus designed for executable coverage, not a representative sample of Sanskrit. The case-level inputs, expected outputs, observed outputs, fired rules, and derivation lengths are reported in Table~\ref{tab:case-results}.
+
+\begin{table}[t]
+\caption{Composition of the evaluation corpus}
+\label{tab:corpus}
+\centering
+\small
+\begin{tabular}{lrl}
+\toprule
+Category & Cases & Representative inputs \\
+\midrule
+Vowel transformations & 8 & \skt{अइ}, \skt{इअ}, \skt{उअ} \\
+V\=rddhi/parar\=upa & 2 & \skt{अए}, \skt{अऐ} \\
+Long-vowel combination & 1 & \skt{अअ} \\
+Consonant transformations & 3 & \skt{तश}, \skt{तष}, \skt{दक} \\
+Anusv\=ara and visarga & 2 & \skt{मक}, \skt{नमसत} \\
+\midrule
+Total & 16 & \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Measures}
-We report exact-match accuracy, rule coverage, per-rule firing count, passing cases involving each rule, derivation length, termination reason, and counterfactual sensitivity. Exact-match accuracy is the fraction of corpus cases for which the final output equals the stored expected output. Rule coverage is the fraction of registered rules observed in at least one successful derivation.
+We report exact-match agreement, rule coverage, per-rule firing count, passing cases involving each rule, derivation length, termination reason, and counterfactual sensitivity. Exact-match agreement is the fraction of corpus cases for which the final output equals the stored expected output:
+\begin{equation}
+  A(C)=\frac{1}{|C|}\sum_{x\in C}\mathbb{1}[Y(x)=G(x)],
+\end{equation}
+where $Y(x)$ is the computed output and $G(x)$ is the stored expected output. Rule coverage is the fraction of registered rules observed in at least one successful derivation. For each rule $r$, the evaluator independently reruns each case with $r$ disabled and computes the output-change rate $S(r)$ in Equation (1). Because these cases are curated and small in number, all reported measures are descriptive corpus statistics; no population estimate, confidence interval, or significance claim is warranted.
 
 \subsection{Reproducibility}
-The evaluator is deterministic. It loads the same registry and corpus used by the API, runs the same derivation engine, and returns a JSON object containing case-level and aggregate results. The repository includes automated tests and a research report that records the measured version of the corpus.
+The evaluator is deterministic. It loads the same registry and corpus used by the API, runs the same derivation engine, and returns case-level and aggregate JSON results. The registry is stored in \code{backend/app/data/rules.json}; the corpus is stored in \code{backend/app/data/evaluation\_cases.json} and identified as \code{panini\_sandhi\_evaluation\_v1}. The repository includes automated tests and a research report recording the measured version. Results can be reproduced by running the backend test suite or requesting \code{GET /evaluation} from a running API. Table~\ref{tab:case-results} makes the case-level computation auditable in the paper itself.
 
 \section{Results}
+\label{sec:results}
 \begin{table}[t]
 \caption{Corpus evaluation results}
 \label{tab:results}
@@ -187,33 +218,75 @@ Rule coverage & 1.000 \\
 \end{tabular}
 \end{table}
 
-The exact-match result is 1.000 on the curated corpus. All eleven registered rules are observed. Counterfactual sensitivity is highest for P60177 and P60187, each changing three of sixteen outputs (18.8\%), followed by P60178, which changes two outputs (12.5\%). P601101, P60188, P60194, P80315, P8040, P8041, P80455, and P823 each change one output (6.2\%) in this corpus. These results demonstrate that the system can measure operational influence; they do not show that a high-sensitivity rule is more important in the complete grammar.
+\begin{table*}[t]
+\caption{Case-level evaluation results. In every row the expected and observed output are identical.}
+\label{tab:case-results}
+\centering
+\small
+\begin{tabular}{llllr}
+\toprule
+Case & Input & Expected / observed & Fired rule & Steps \\
+\midrule
+vowel-01 & \skt{अइ} & \skt{ए} & P60187 & 1 \\
+vowel-02 & \skt{इअ} & \skt{यअ} & P60177 & 1 \\
+vowel-03 & \skt{उअ} & \skt{वअ} & P60177 & 1 \\
+vowel-04 & \skt{एअ} & \skt{अयअ} & P60178 & 1 \\
+vowel-05 & \skt{ओअ} & \skt{अवअ} & P60178 & 1 \\
+vowel-06 & \skt{अउ} & \skt{ओ} & P60187 & 1 \\
+vowel-07 & \skt{आउ} & \skt{ओ} & P60187 & 1 \\
+vowel-08 & \skt{ऋअ} & \skt{रअ} & P60177 & 1 \\
+vowel-09 & \skt{अए} & \skt{ए} & P60194 & 1 \\
+vowel-10 & \skt{अऐ} & \skt{ऐ} & P60188 & 1 \\
+vowel-11 & \skt{अअ} & \skt{आ} & P601101 & 1 \\
+consonant-01 & \skt{तश} & \skt{चश} & P8040 & 1 \\
+consonant-02 & \skt{तष} & \skt{टष} & P8041 & 1 \\
+consonant-03 & \skt{दक} & \skt{तक} & P80455 & 1 \\
+consonant-04 & \skt{मक} & \skt{ंक} & P823 & 1 \\
+consonant-05 & \skt{नमसत} & \skt{नमःत} & P80315 & 1 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+All sixteen cases match their stored expected outputs, and all eleven registered rules fire at least once. Table~\ref{tab:case-results} shows that every case terminates after one successful transformation. The exact-match agreement of 1.000 is therefore a verified property of this fixed corpus and implementation, not an estimate of accuracy on unrestricted Sanskrit. Counterfactual sensitivity is highest for P60177 and P60187, each changing three of sixteen outputs (18.8\%), followed by P60178, which changes two outputs (12.5\%). P601101, P60188, P60194, P80315, P8040, P8041, P80455, and P823 each change one output (6.2\%) in this corpus. The complete ranking is descriptive and corpus-relative; it does not establish a hierarchy of importance in the complete grammar.
+
+As a concrete trace, the API derives \skt{अइ} as \skt{ए} with P60187 as the applied rule. The same rule is also reported for \skt{अउ} $\rightarrow$ \skt{ओ}, while P8040 derives \skt{तश} $\rightarrow$ \skt{चश}. These examples show the unit of evidence exposed by the system: an input, a selected executable rule, and a resulting output. They should not be read as independent philological adjudication of the corresponding s\=utra.
+
+The ablation experiment has a deliberately operational interpretation. For each registered rule, the evaluator reruns all sixteen cases with that rule disabled and counts final-output changes. It does not infer hidden causes, assign statistical significance, or claim that the ranking transfers to a larger or independently sampled corpus. The reported values are useful for debugging and prioritizing further validation, rather than for declaring a hierarchy of rules in P\={a}\d{N}ini's grammar. Each evaluation derivation contains a single successful rule application, so the interaction miner reports no observed-before or co-fired edges for this corpus. The miner itself is implemented, but these sixteen cases do not provide empirical evidence of multi-rule interaction.
 
 An important engineering result emerged during evaluation: comparing serialized states including the internal step counter caused no-op rules to appear as successful transformations. Excluding the bookkeeping field from semantic comparison corrected this issue and made the test corpus reflect actual surface/state changes. This illustrates why a traceable execution model is useful: it exposes implementation-level ambiguities that a final-output-only evaluator would miss.
 
 \section{Interactive Research Interface}
-The frontend is a browser-based laboratory with three views. The Derive view accepts custom Devan\=agar\=i input, displays the loaded rule registry, permits arbitrary rule selection, and renders the derivation trace. The Counterfactual view compares full and altered derivations and displays changed steps. The Rule Atlas view exposes declared dependency/blocking edges, empirically observed interactions, and the corpus-relative impact ranking.
+The frontend is a browser-based laboratory with three views. The Derive view accepts custom Devan\=agar\=i input, displays the loaded rule registry, permits rule selection, and renders derivation traces. The Counterfactual view compares a baseline with altered derivations and displays changed steps. The Rule Atlas view exposes declared dependency/blocking edges, observed interactions when present, and the corpus-relative impact ranking. For the evaluation corpus in this study, the observed-interaction graph is empty. These interfaces make the software capabilities inspectable; user-study evidence about usability or research utility has not been collected.
 
 The interface is intentionally a research console rather than a general Sanskrit editor. It makes the intervention visible: a user can remove a rule, rerun a derivation, and inspect the output and intermediate path. The visual layer is not used as evidence by itself; all displayed values are returned by the executable API.
 
 \section{Limitations and Threats to Validity}
+\label{sec:limitations}
 \textbf{Linguistic scope:} The system contains eleven rules, not the complete \textit{A\d{s}t\=adhy\=ay\=i}. Three entries are explicitly simplified experimental subsets. Some traditional conditions, exceptions, domains, and metarules are absent.
 
 \textbf{Representation:} Tokenization is character-level. It does not yet model morphology, word boundaries, accent, derivational history, or all Sanskrit phonological distinctions.
 
 \textbf{Corpus validity:} Sixteen cases are a controlled smoke corpus, not a statistically representative evaluation set. The expected outputs are curated for the implemented subset and require external linguistic validation before being used as a gold standard.
 
+\textbf{External validation:} The study does not compare its outputs with an external Sanskrit sandhi implementation, a digitized commentary, or an independently annotated benchmark. The reported exact-match value must therefore be interpreted as internal corpus agreement. A stronger linguistic evaluation would require independently sourced examples, negative cases, boundary and morphological annotations, and a preregistered comparison protocol.
+
 \textbf{Causal interpretation:} Ablation sensitivity measures output dependence inside this program. It must not be read as proof of textual, historical, or theoretical dependency in the grammatical tradition.
+
+\textbf{Interaction coverage:} The interaction miner records pairs of distinct rules that co-fire or fire in sequence. Since all sixteen evaluation cases are one-step derivations, this corpus yields no observed interactions. A multi-step corpus is needed to evaluate this feature empirically.
+
+\textbf{Ordering intervention:} The request interface accepts a custom rule order, but the derivation engine sorts rules by priority on construction. A request to reverse the order therefore does not change actual scheduling. Rule-order experimentation is a known implementation limitation and is not included in the reported findings.
+
+\textbf{Authoring and gold-standard bias:} The same project defines the rule encodings and curates expected outputs. Storing expected outputs separately from execution code reduces direct coupling but does not provide independent annotation. External linguistic review and independently sourced examples are required before interpreting corpus agreement as linguistic validation.
 
 \textbf{Literature comparison:} The current study does not present a benchmark against an external Sanskrit grammar implementation. A publication claim about superiority would therefore be unsupported.
 
 \section{Conclusion and Future Work}
-This paper presented \system, an executable experimental framework for inspecting a selected P\={a}\d{N}inian sandhi system. The prototype integrates structured rule definitions, deterministic derivations, full state traces, typed graphs, counterfactual interventions, impact analysis, a browser interface, and a reproducible evaluation protocol. On the current sixteen-case corpus, it obtains 16/16 exact matches and exercises all eleven registered rules.
+This paper presented \system, an executable framework for inspecting a selected P\={a}\d{N}inian sandhi subset. The implemented artifact combines structured rule definitions, deterministic derivations, step-level traces, declared relation graphs, interaction mining, rule-ablation experiments, impact analysis, a browser interface, and a reproducible evaluation endpoint. On the current sixteen-case corpus, the implementation matches all stored expected outputs and exercises all eleven registered rules. The same evaluation is equally clear about the limits of this evidence: every derivation in the corpus is a single step, the observed-interaction graph is consequently empty, and effective rule-order intervention is not yet implemented. Taken together, the appropriate conclusion is that \system provides a working and inspectable experimental artifact, while broader linguistic validity and multi-rule experimental findings remain open research questions rather than settled results.
 
-The result is not a complete computational A\d{s}t\=adhy\=ay\=i and should not be presented as one. Its contribution is a controlled research instrument: a way to ask experimental questions about an executable grammar and to preserve the evidence needed to inspect the answer. Future work should expand independently verified examples, add morphological and boundary-aware state, compare against external implementations, evaluate larger intervention matrices, and conduct a systematic literature comparison.
+The system is not a complete computational \textit{A\d{s}t\=adhy\=ay\=i}, and it is not presented as one. Its contribution is a controlled research instrument: a way to ask precise experimental questions of an executable grammar, and to preserve exactly the evidence needed to check the answer. Immediate future work follows directly from the limitations in Section~\ref{sec:limitations}: expanding the corpus with independently sourced and negative examples, adding morphological and boundary-aware state, benchmarking against an external Sanskrit sandhi implementation, implementing an effective rule-ordering intervention, evaluating larger and multi-step intervention matrices so the interaction miner has evidence to report, and conducting a systematic comparison with existing Sanskrit computational platforms.
 
 \section*{Acknowledgment}
-The author acknowledges the intellectual contribution of the P\={a}\d{N}inian grammatical tradition and the need to distinguish respectful computational engagement with that tradition from claims about exhaustive representation.
+The authors acknowledge the intellectual contribution of the P\={a}\d{N}inian grammatical tradition, and the corresponding need to distinguish respectful computational engagement with that tradition from any claim of exhaustive representation.
 
 \balance
 \begin{thebibliography}{00}
@@ -223,10 +296,9 @@ The author acknowledges the intellectual contribution of the P\={a}\d{N}inian gr
 \bibitem{bharati1995} A. Bharati, V. Chaitanya, and R. Sangal, \textit{Natural Language Processing: A Paninian Perspective}. New Delhi, India: Prentice-Hall of India, 1995.
 \bibitem{huet2006} G. Huet, ``Lexicon-directed segmentation and tagging of Sanskrit,'' in \textit{Proc. 11th EACL}, Trento, Italy, 2006, pp. 1--8.
 \bibitem{huet2010} G. Huet, ``Formal structure of Sanskrit syntax,'' in \textit{Proc. 23rd COLING}, Beijing, China, 2010, pp. 1--9.
-\bibitem{stallings1970} J. C. Staal, \textit{The Concept of Metalanguage and Its Significance for the Study of P\={a}\d{N}ini}. Amsterdam, The Netherlands: North-Holland, 1969.
+\bibitem{staal1969} J. F. Staal, \textit{The Concept of Metalanguage and Its Significance for the Study of P\={a}\d{N}ini}. Amsterdam, The Netherlands: North-Holland, 1969.
 \bibitem{jurafsky2023} D. Jurafsky and J. H. Martin, \textit{Speech and Language Processing}, 3rd ed., draft, 2023.
 \bibitem{hagberg2008} A. A. Hagberg, D. A. Schult, and P. J. Swart, ``Exploring network structure, dynamics, and function using NetworkX,'' in \textit{Proc. 7th Python in Science Conf.}, Pasadena, CA, USA, 2008, pp. 11--15.
-\bibitem{ieee2023} IEEE, \textit{IEEE Editorial Style Manual for Authors}. Piscataway, NJ, USA: IEEE, 2023.
 \end{thebibliography}
 
 \end{document}
